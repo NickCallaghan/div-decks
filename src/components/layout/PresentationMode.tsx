@@ -1,37 +1,31 @@
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useEditorStore } from '../../store/editor-store';
 import { serializePresentation } from '../../lib/serializer';
 
 interface PresentationModeProps {
+  startSlide: number;
   onExit: () => void;
 }
 
-export function PresentationMode({ onExit }: PresentationModeProps) {
+export function PresentationMode({ startSlide, onExit }: PresentationModeProps) {
   const presentation = useEditorStore((s) => s.presentation);
-  const activeSlideIndex = useEditorStore((s) => s.activeSlideIndex);
   const [showHint, setShowHint] = useState(true);
 
-  // Build the full HTML with a start-at-slide script injected
-  const srcdoc = useMemo(() => {
-    if (!presentation) return '';
+  // Build srcdoc ONCE on mount — never re-render the iframe
+  const srcdocRef = useRef<string>('');
+  if (srcdocRef.current === '' && presentation) {
     const html = serializePresentation(presentation);
-    // Inject a script that scrolls to the active slide after SlideEngine inits
-    // No CSS overrides — let the original SlideEngine run exactly as-is.
-    // Only inject a script to start at the current slide.
     const startScript = `
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-  // Wait for SlideEngine to init, then jump to the active slide instantly
   setTimeout(function() {
     var deck = document.querySelector('.deck');
     var slides = document.querySelectorAll('.slide');
-    var target = slides[${activeSlideIndex}];
+    var target = slides[${startSlide}];
     if (target && deck) {
-      // Temporarily disable smooth scroll to jump without animation
       deck.style.scrollBehavior = 'auto';
       target.scrollIntoView();
       target.classList.add('visible');
-      // Re-enable smooth scroll for subsequent navigation
       requestAnimationFrame(function() {
         deck.style.scrollBehavior = 'smooth';
       });
@@ -39,17 +33,20 @@ document.addEventListener('DOMContentLoaded', function() {
   }, 150);
 });
 </script>`;
-    return html.replace('</body>', startScript + '\n</body>');
-  }, [presentation, activeSlideIndex]);
+    srcdocRef.current = html.replace('</body>', startScript + '\n</body>');
+  }
 
-  // Escape exits presentation mode
+  // Capture ALL keyboard events during presentation mode so parent handlers don't fire
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
       if (e.key === 'Escape') {
         e.preventDefault();
         e.stopPropagation();
         onExit();
+        return;
       }
+      // Stop all other keys from reaching parent handlers (arrow keys, etc.)
+      e.stopPropagation();
     }
     window.addEventListener('keydown', handleKeyDown, true);
     return () => window.removeEventListener('keydown', handleKeyDown, true);
@@ -71,7 +68,7 @@ document.addEventListener('DOMContentLoaded', function() {
       background: '#000',
     }}>
       <iframe
-        srcDoc={srcdoc}
+        srcDoc={srcdocRef.current}
         style={{
           width: '100%',
           height: '100%',

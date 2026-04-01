@@ -71,7 +71,7 @@ export default function App() {
       <StatusBar />
 
       {showShortcuts && <ShortcutHints onClose={() => setShowShortcuts(false)} />}
-      {isPresenting && <PresentationMode onExit={() => setIsPresenting(false)} />}
+      {isPresenting && <PresentationMode startSlide={useEditorStore.getState().activeSlideIndex} onExit={() => setIsPresenting(false)} />}
     </div>
   );
 }
