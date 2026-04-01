@@ -1,8 +1,8 @@
-import { useCallback } from 'react';
-import { fetchPresentation, savePresentation, backupPresentation } from '../api/presentations';
-import { parsePresentation } from '../lib/parser';
-import { serializePresentation } from '../lib/serializer';
-import { useEditorStore } from '../store/editor-store';
+import { useCallback } from "react";
+import { fetchPresentation, savePresentation } from "../api/presentations";
+import { parsePresentation } from "../lib/parser";
+import { serializePresentation } from "../lib/serializer";
+import { useEditorStore } from "../store/editor-store";
 
 export function usePresentation() {
   const presentation = useEditorStore((s) => s.presentation);
@@ -10,25 +10,19 @@ export function usePresentation() {
   const setSavedHtml = useEditorStore((s) => s.setSavedHtml);
   const setIsDirty = useEditorStore((s) => s.setIsDirty);
 
-  const open = useCallback(async (filename: string) => {
-    const html = await fetchPresentation(filename);
-    const model = parsePresentation(filename, html);
-    setPresentation(model);
-    setSavedHtml(html);
-  }, [setPresentation, setSavedHtml]);
+  const open = useCallback(
+    async (filename: string) => {
+      const html = await fetchPresentation(filename);
+      const model = parsePresentation(filename, html);
+      setPresentation(model);
+      setSavedHtml(html);
+    },
+    [setPresentation, setSavedHtml],
+  );
 
   const save = useCallback(async () => {
     if (!presentation) return;
     const html = serializePresentation(presentation);
-    // Backup on first save
-    const savedHtml = useEditorStore.getState().savedHtml;
-    if (savedHtml !== null) {
-      try {
-        await backupPresentation(presentation.filename);
-      } catch {
-        // Backup failure shouldn't block save
-      }
-    }
     await savePresentation(presentation.filename, html);
     setSavedHtml(html);
     setIsDirty(false);

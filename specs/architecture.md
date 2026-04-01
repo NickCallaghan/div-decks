@@ -15,10 +15,10 @@ Browser (Vite + React + Kumo UI)
          │ REST API (proxied via Vite in dev)
          ▼
 Express server (port 3001)
-  ├── GET  /api/presentations           → list .html files
-  ├── GET  /api/presentations/:file     → read HTML
-  ├── PUT  /api/presentations/:file     → write HTML (atomic)
-  └── POST /api/presentations/:file/backup → .bak copy
+  ├── GET    /api/presentations           → list .html files
+  ├── GET    /api/presentations/:file     → read HTML
+  ├── PUT    /api/presentations/:file     → write HTML (atomic)
+  └── DELETE /api/presentations/:file     → delete file
 ```
 
 ### Why iframes?
@@ -27,43 +27,54 @@ Slides use `100dvh`, `scroll-snap`, CSS custom properties, and viewport-relative
 
 ## Tech Stack
 
-| Layer | Technology | Why |
-|-------|-----------|-----|
-| UI framework | React 19 + TypeScript | Component model, type safety |
-| Component library | @cloudflare/kumo (Tailwind v4) | Polished UI components |
-| Build | Vite 8 | Fast HMR, proxy for API |
-| State management | Zustand 5 | Simple, performant, no boilerplate |
-| Drag-and-drop (sidebar) | @dnd-kit | Modern, accessible, good TS support |
-| Drag-and-drop (in-slide) | Custom pointer events | Runs inside iframe, no library access |
-| Server | Express 4 | Simple file I/O API |
-| Dev runner | concurrently | Vite + Express in parallel |
+| Layer                    | Technology                     | Why                                   |
+| ------------------------ | ------------------------------ | ------------------------------------- |
+| UI framework             | React 19 + TypeScript          | Component model, type safety          |
+| Component library        | @cloudflare/kumo (Tailwind v4) | Polished UI components                |
+| Build                    | Vite 8                         | Fast HMR, proxy for API               |
+| State management         | Zustand 5                      | Simple, performant, no boilerplate    |
+| Drag-and-drop (sidebar)  | @dnd-kit                       | Modern, accessible, good TS support   |
+| Drag-and-drop (in-slide) | Custom pointer events          | Runs inside iframe, no library access |
+| Server                   | Express 4                      | Simple file I/O API                   |
+| Dev runner               | concurrently                   | Vite + Express in parallel            |
 
 ## Data Model
 
 ```typescript
 interface PresentationModel {
-  filename: string;          // e.g. "tmnt-story.html"
-  title: string;             // from <title> tag
-  head: string;              // full <head> innerHTML (styles, fonts, meta)
-  slides: SlideModel[];      // ordered array of slides
-  scriptBlock: string;       // preserved <script> blocks from end of body
+  filename: string; // e.g. "tmnt-story.html"
+  title: string; // from <title> tag
+  head: string; // full <head> innerHTML (styles, fonts, meta)
+  slides: SlideModel[]; // ordered array of slides
+  scriptBlock: string; // preserved <script> blocks from end of body
 }
 
 interface SlideModel {
-  id: string;                // UUID for React keys
-  index: number;             // position in deck
-  type: SlideType;           // parsed from class="slide slide--{type}"
-  outerHtml: string;         // full <section> HTML
-  comment?: string;          // preceding HTML comment, if any
+  id: string; // UUID for React keys
+  index: number; // position in deck
+  type: SlideType; // parsed from class="slide slide--{type}"
+  outerHtml: string; // full <section> HTML
+  comment?: string; // preceding HTML comment, if any
 }
 
-type SlideType = 'title' | 'divider' | 'content' | 'split' | 'diagram'
-  | 'dashboard' | 'table' | 'code' | 'quote' | 'bleed' | 'unknown';
+type SlideType =
+  | "title"
+  | "divider"
+  | "content"
+  | "split"
+  | "diagram"
+  | "dashboard"
+  | "table"
+  | "code"
+  | "quote"
+  | "bleed"
+  | "unknown";
 ```
 
 ## Data Flow
 
 ### Load
+
 1. User clicks file in FileBrowser
 2. `fetchPresentation(filename)` → GET /api/presentations/:filename → raw HTML
 3. `parsePresentation(filename, html)` → PresentationModel
@@ -74,24 +85,32 @@ type SlideType = 'title' | 'divider' | 'content' | 'split' | 'diagram'
 4. Zustand store updated, EditorCanvas renders active slide in iframe
 
 ### Edit
+
 1. SlideRenderer builds iframe srcdoc: slide outerHtml + presentation head + editor overrides + bridge script
 2. Bridge script handles all interaction inside the iframe
 3. On any DOM change, bridge clones the section, strips editor artifacts, sends `dom-updated` via postMessage
 4. Parent updates `SlideModel.outerHtml` in Zustand, pushes undo snapshot
 
 ### Save
+
 1. `serializePresentation(model)` reconstructs full HTML: DOCTYPE + head + deck with slides in order + scripts
 2. `PUT /api/presentations/:filename` writes atomically (temp file + rename)
-3. Backup created on first save per session
+
+### Delete
+
+1. User clicks trash icon on file item in FileBrowser (appears on hover)
+2. Confirmation dialog shown
+3. `DELETE /api/presentations/:filename` removes the file
+4. If the deleted file was open, the editor state is cleared
 
 ## Server API
 
-| Method | Path | Body | Response |
-|--------|------|------|----------|
-| GET | /api/presentations | - | `{ files: [{ name, size, modified }] }` |
-| GET | /api/presentations/:filename | - | Raw HTML (text/html) |
-| PUT | /api/presentations/:filename | Raw HTML (text/html, 10MB limit) | `{ ok: true }` |
-| POST | /api/presentations/:filename/backup | - | `{ backupPath }` |
+| Method | Path                         | Body                             | Response                                |
+| ------ | ---------------------------- | -------------------------------- | --------------------------------------- |
+| GET    | /api/presentations           | -                                | `{ files: [{ name, size, modified }] }` |
+| GET    | /api/presentations/:filename | -                                | Raw HTML (text/html)                    |
+| PUT    | /api/presentations/:filename | Raw HTML (text/html, 10MB limit) | `{ ok: true }`                          |
+| DELETE | /api/presentations/:filename | -                                | `{ ok: true }`                          |
 
 All filenames validated: `/^[a-zA-Z0-9_\-. ]+\.html$/`, no `..` path traversal.
 PUT writes atomically: temp file in os.tmpdir() then fs.rename().

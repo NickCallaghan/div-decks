@@ -7,7 +7,9 @@
   --editor-statusbar-height: 32px;
 }
 
-html, body, #root {
+html,
+body,
+#root {
   height: 100%;
   margin: 0;
   overflow: hidden;
@@ -15,7 +17,9 @@ html, body, #root {
 
 .app-shell {
   display: grid;
-  grid-template-rows: var(--editor-toolbar-height) 1fr var(--editor-statusbar-height);
+  grid-template-rows: var(--editor-toolbar-height) 1fr var(
+      --editor-statusbar-height
+    );
   grid-template-columns: var(--editor-sidebar-width) 1fr;
   height: 100vh;
   background: var(--color-gray-50);
@@ -114,6 +118,14 @@ html, body, #root {
   color: var(--color-gray-400);
 }
 
+.file-item:hover .file-item__delete {
+  opacity: 1;
+}
+
+.file-item__delete:hover {
+  color: var(--color-red-500) !important;
+}
+
 /* Slide thumbnails */
 .slide-thumbnail {
   position: relative;
@@ -121,7 +133,9 @@ html, body, #root {
   overflow: hidden;
   cursor: pointer;
   border: 2px solid transparent;
-  transition: border-color 0.15s, box-shadow 0.15s;
+  transition:
+    border-color 0.15s,
+    box-shadow 0.15s;
   background: white;
 }
 
@@ -217,7 +231,9 @@ html, body, #root {
   aspect-ratio: 16 / 9;
   border-radius: 8px;
   overflow: hidden;
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.12), 0 1px 4px rgba(0, 0, 0, 0.08);
+  box-shadow:
+    0 4px 24px rgba(0, 0, 0, 0.12),
+    0 1px 4px rgba(0, 0, 0, 0.08);
   background: white;
   position: relative;
 }
@@ -255,4 +271,3 @@ html, body, #root {
   font-size: 14px;
   max-width: 300px;
 }
-
