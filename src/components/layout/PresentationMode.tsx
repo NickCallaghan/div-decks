@@ -17,18 +17,17 @@ export function PresentationMode({ onExit }: PresentationModeProps) {
     const html = serializePresentation(presentation);
     // Inject a script that scrolls to the active slide after SlideEngine inits
     const startScript = `
+<style>
+  /* Override fade transitions — all slides always visible, smooth scroll does the sliding */
+  .slide, .slide .reveal {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
+  }
+</style>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-  // Patch scrollIntoView to use instant behavior — prevents smooth scroll
-  // hitting every snap point when navigating between non-adjacent slides
-  var origScrollIntoView = Element.prototype.scrollIntoView;
-  Element.prototype.scrollIntoView = function(opts) {
-    if (typeof opts === 'object') {
-      opts.behavior = 'instant';
-    }
-    return origScrollIntoView.call(this, opts || { behavior: 'instant' });
-  };
-
+  // Start at the active slide (instant, no animation)
   setTimeout(function() {
     var slides = document.querySelectorAll('.slide');
     var target = slides[${activeSlideIndex}];
