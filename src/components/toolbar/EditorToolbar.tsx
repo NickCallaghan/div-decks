@@ -113,9 +113,10 @@ export function EditorToolbar({ onPlay }: EditorToolbarProps) {
     <div className="app-toolbar">
       {/* Logo / title */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ color: 'var(--color-blue-500)' }}>
-          <rect x="2" y="3" width="20" height="18" rx="2" />
-          <line x1="8" y1="21" x2="8" y2="3" />
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'var(--color-blue-500)' }}>
+          <polyline points="16 18 22 12 16 6" />
+          <polyline points="8 6 2 12 8 18" />
+          <line x1="14" y1="4" x2="10" y2="20" />
         </svg>
         <span style={{ fontWeight: 600, fontSize: 14, color: 'var(--color-gray-900)', fontFamily: 'ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace' }}>
           div.deck
