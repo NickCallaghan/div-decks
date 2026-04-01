@@ -33,23 +33,33 @@ document.addEventListener('DOMContentLoaded', function() {
   }, 150);
 });
 </script>`;
-    srcdocRef.current = html.replace('</body>', startScript + '\n</body>');
+    const escapeScript = `
+<script>
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') {
+    e.preventDefault();
+    parent.postMessage({ type: 'exit-presentation' }, '*');
+  }
+});
+</script>`;
+    srcdocRef.current = html.replace('</body>', startScript + escapeScript + '\n</body>');
   }
 
-  // Capture ALL keyboard events during presentation mode so parent handlers don't fire
+  // Suppress parent keyboard handlers and listen for escape from iframe
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
-      if (e.key === 'Escape') {
-        e.preventDefault();
-        e.stopPropagation();
-        onExit();
-        return;
-      }
-      // Stop all other keys from reaching parent handlers (arrow keys, etc.)
+      if (e.key === 'Escape') { onExit(); return; }
       e.stopPropagation();
     }
+    function handleMessage(e: MessageEvent) {
+      if (e.data?.type === 'exit-presentation') onExit();
+    }
     window.addEventListener('keydown', handleKeyDown, true);
-    return () => window.removeEventListener('keydown', handleKeyDown, true);
+    window.addEventListener('message', handleMessage);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown, true);
+      window.removeEventListener('message', handleMessage);
+    };
   }, [onExit]);
 
   // Fade hint after 3 seconds
