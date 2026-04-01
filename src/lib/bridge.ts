@@ -26,7 +26,6 @@ export const EDITOR_BRIDGE_SCRIPT = `
   handle.className = 'se-handle';
   handle.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><circle cx="8" cy="4" r="2"/><circle cx="16" cy="4" r="2"/><circle cx="8" cy="12" r="2"/><circle cx="16" cy="12" r="2"/><circle cx="8" cy="20" r="2"/><circle cx="16" cy="20" r="2"/></svg>';
   handle.style.display = 'none';
-  handle.style.touchAction = 'none';
   document.body.appendChild(handle);
 
   var menu = document.createElement('div');
@@ -285,18 +284,20 @@ export const EDITOR_BRIDGE_SCRIPT = `
     parentA.insertBefore(b, nextA);
   }
 
-  handle.addEventListener('pointerdown', function(e) {
+  // Mousedown on handle starts potential drag
+  handle.addEventListener('mousedown', function(e) {
     if (!handleTarget) return;
     e.preventDefault();
+    e.stopPropagation();
     dragStartX = e.clientX;
     dragStartY = e.clientY;
     didDrag = false;
     dragEl = handleTarget;
     isGridDrag = detectGridLayout(dragEl);
-    handle.setPointerCapture(e.pointerId);
   });
 
-  handle.addEventListener('pointermove', function(e) {
+  // Document-level mousemove handles drag (no pointer capture needed)
+  document.addEventListener('mousemove', function(e) {
     if (!dragEl) return;
 
     var dist = Math.sqrt(Math.pow(e.clientX - dragStartX, 2) + Math.pow(e.clientY - dragStartY, 2));
@@ -304,6 +305,7 @@ export const EDITOR_BRIDGE_SCRIPT = `
       isDragging = true;
       didDrag = true;
       hideMenu();
+      hideHandle();
       dragEl.style.opacity = '0.4';
       dragEl.style.outline = '2px dashed #3b82f6';
       dragEl.style.outlineOffset = '2px';
@@ -332,8 +334,11 @@ export const EDITOR_BRIDGE_SCRIPT = `
     dropTarget = siblingTarget;
   });
 
-  handle.addEventListener('pointerup', function(e) {
-    if (isDragging && dragEl && dropTarget) {
+  // Document-level mouseup completes drag or triggers click
+  document.addEventListener('mouseup', function(e) {
+    if (!dragEl) return;
+
+    if (isDragging && dropTarget) {
       if (isGridDrag) {
         swapElements(dragEl, dropTarget);
       } else {
@@ -344,15 +349,12 @@ export const EDITOR_BRIDGE_SCRIPT = `
     }
 
     // Reset drag state
-    if (dragEl) {
-      dragEl.style.opacity = '';
-      dragEl.style.outline = '';
-      dragEl.style.outlineOffset = '';
-      dragEl.style.pointerEvents = '';
-    }
+    dragEl.style.opacity = '';
+    dragEl.style.outline = '';
+    dragEl.style.outlineOffset = '';
+    dragEl.style.pointerEvents = '';
     isDragging = false;
     isGridDrag = false;
-    dragEl = null;
     dropTarget = null;
     dropIndicator.style.display = 'none';
     dropIndicator.style.background = '';
@@ -369,24 +371,8 @@ export const EDITOR_BRIDGE_SCRIPT = `
         showMenu();
       }
     }
-  });
 
-  handle.addEventListener('pointercancel', function(e) {
-    if (dragEl) {
-      dragEl.style.opacity = '';
-      dragEl.style.outline = '';
-      dragEl.style.outlineOffset = '';
-      dragEl.style.pointerEvents = '';
-    }
-    isDragging = false;
-    isGridDrag = false;
     dragEl = null;
-    dropTarget = null;
-    dropIndicator.style.display = 'none';
-    dropIndicator.style.background = '';
-    dropIndicator.style.border = '';
-    dropIndicator.style.borderRadius = '';
-    dropIndicator.style.height = '';
   });
 
   // ===== Hover → Show Handle (zone-based with debounce) =====
