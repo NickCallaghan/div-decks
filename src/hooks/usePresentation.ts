@@ -3,6 +3,7 @@ import { fetchPresentation, savePresentation } from "../api/presentations";
 import { parsePresentation } from "../lib/parser";
 import { serializePresentation } from "../lib/serializer";
 import { useEditorStore } from "../store/editor-store";
+import { suppressNextHmr } from "../lib/hmr-client";
 
 export function usePresentation() {
   const presentation = useEditorStore((s) => s.presentation);
@@ -23,6 +24,7 @@ export function usePresentation() {
   const save = useCallback(async () => {
     if (!presentation) return;
     const html = serializePresentation(presentation);
+    suppressNextHmr();
     await savePresentation(presentation.filename, html);
     setSavedHtml(html);
     setIsDirty(false);

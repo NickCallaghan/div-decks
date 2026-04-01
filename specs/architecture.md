@@ -95,6 +95,8 @@ type SlideType =
 
 1. `serializePresentation(model)` reconstructs full HTML: DOCTYPE + head + deck with slides in order + scripts
 2. `PUT /api/presentations/:filename` writes atomically (temp file + rename)
+3. A custom Vite plugin (`presentationHmr` in `vite.config.ts`) intercepts the file change and sends a custom HMR event instead of triggering a full page reload
+4. The HMR client (`src/lib/hmr-client.ts`) receives the event and re-fetches the presentation data seamlessly
 
 ### Delete
 
