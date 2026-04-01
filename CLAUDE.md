@@ -47,6 +47,12 @@ npm run test:watch  # Watch mode
 
 Tests cover parser, serializer (including round-trip), and store (undo/redo, reorder, selection).
 
+## Development Rules
+
+- **Write tests for new functionality.** Every new feature or bug fix should include tests. Parser/serializer changes need round-trip tests. Store changes need state transition tests. If a bug is fixed, add a regression test that would have caught it.
+- **Update specs when adding features.** When the architecture, interaction model, or API changes, update the corresponding file in `specs/`. `specs/architecture.md` covers data model, data flow, API, and project structure. `specs/interaction-model.md` covers the bridge state machine, element selectors, drag behavior, and keyboard shortcuts.
+- **Run tests before committing.** `npm test` must pass. Don't commit with failing tests.
+
 ## Conventions
 
 - The bridge script is a string template in `bridge.ts` — it runs inside iframe sandboxes, so it uses vanilla JS (no imports, no libraries).
