@@ -1,4 +1,4 @@
-# Slide Editor — Architecture Specification
+# div.deck — Architecture Specification
 
 ## Overview
 
@@ -99,7 +99,7 @@ PUT writes atomically: temp file in os.tmpdir() then fs.rename().
 ## Project Structure
 
 ```
-slide-editor/
+div.deck/
 ├── server/
 │   ├── index.ts                    # Express entry (port 3001, CORS)
 │   └── routes/presentations.ts     # File I/O endpoints

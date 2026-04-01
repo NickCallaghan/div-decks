@@ -56,7 +56,7 @@ router.put('/:filename', async (req, res) => {
   try {
     const html = req.body as string;
     const filePath = path.join(presentationsDir, filename);
-    const tmpPath = path.join(os.tmpdir(), `slide-editor-${Date.now()}-${filename}`);
+    const tmpPath = path.join(os.tmpdir(), `div-deck-${Date.now()}-${filename}`);
     await fs.writeFile(tmpPath, html, 'utf-8');
     await fs.rename(tmpPath, filePath);
     res.json({ ok: true });

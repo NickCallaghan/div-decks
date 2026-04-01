@@ -17,5 +17,5 @@ app.use('/presentations', express.static(presentationsDir));
 app.use('/api/presentations', presentationsRouter);
 
 app.listen(PORT, () => {
-  console.log(`Slide editor server running on http://localhost:${PORT}`);
+  console.log(`div.deck server running on http://localhost:${PORT}`);
 });

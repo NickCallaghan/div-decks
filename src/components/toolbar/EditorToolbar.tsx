@@ -117,8 +117,8 @@ export function EditorToolbar({ onPlay }: EditorToolbarProps) {
           <rect x="2" y="3" width="20" height="18" rx="2" />
           <line x1="8" y1="21" x2="8" y2="3" />
         </svg>
-        <span style={{ fontWeight: 600, fontSize: 14, color: 'var(--color-gray-900)' }}>
-          Slide Editor
+        <span style={{ fontWeight: 600, fontSize: 14, color: 'var(--color-gray-900)', fontFamily: 'ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace' }}>
+          div.deck
         </span>
       </div>
 

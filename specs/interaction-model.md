@@ -1,4 +1,4 @@
-# Slide Editor — Interaction Model
+# div.deck — Interaction Model
 
 ## State Machine
 
