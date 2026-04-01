@@ -351,9 +351,14 @@ export const EDITOR_BRIDGE_SCRIPT = `
       dragEl.style.pointerEvents = '';
     }
     isDragging = false;
+    isGridDrag = false;
     dragEl = null;
     dropTarget = null;
-    dropIndicator.style.display = '';
+    dropIndicator.style.display = 'none';
+    dropIndicator.style.background = '';
+    dropIndicator.style.border = '';
+    dropIndicator.style.borderRadius = '';
+    dropIndicator.style.height = '';
 
     // If it was a click (no drag), toggle the context menu
     if (!didDrag && handleTarget) {
@@ -374,9 +379,14 @@ export const EDITOR_BRIDGE_SCRIPT = `
       dragEl.style.pointerEvents = '';
     }
     isDragging = false;
+    isGridDrag = false;
     dragEl = null;
     dropTarget = null;
     dropIndicator.style.display = 'none';
+    dropIndicator.style.background = '';
+    dropIndicator.style.border = '';
+    dropIndicator.style.borderRadius = '';
+    dropIndicator.style.height = '';
   });
 
   // ===== Hover → Show Handle (zone-based with debounce) =====
@@ -402,8 +412,9 @@ export const EDITOR_BRIDGE_SCRIPT = `
       // No target — check if mouse is in the handle zone
       if (handleTarget) {
         var rect = handleTarget.getBoundingClientRect();
+        // Zone only covers the handle area (left of the element), not the full card
         var inZone = e.clientX >= rect.left - 36
-          && e.clientX <= rect.right
+          && e.clientX <= rect.left + 8
           && e.clientY >= rect.top - 4
           && e.clientY <= rect.bottom + 4;
         if (inZone) {
