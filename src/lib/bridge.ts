@@ -26,7 +26,7 @@ export const EDITOR_BRIDGE_SCRIPT = `
   handle.className = 'se-handle';
   handle.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><circle cx="8" cy="4" r="2"/><circle cx="16" cy="4" r="2"/><circle cx="8" cy="12" r="2"/><circle cx="16" cy="12" r="2"/><circle cx="8" cy="20" r="2"/><circle cx="16" cy="20" r="2"/></svg>';
   handle.style.display = 'none';
-  handle.setAttribute('draggable', 'true');
+  handle.style.touchAction = 'none';
   document.body.appendChild(handle);
 
   var menu = document.createElement('div');
@@ -237,39 +237,67 @@ export const EDITOR_BRIDGE_SCRIPT = `
     e.stopPropagation();
   });
 
-  // ===== Handle: click → menu, drag → reorder =====
-  handle.addEventListener('click', function(e) {
-    e.preventDefault();
-    e.stopPropagation();
-    if (!handleTarget) return;
-    selectElement(handleTarget);
-    if (menu.style.display === 'block') {
-      hideMenu();
-    } else {
-      showMenu();
-    }
-  });
+  // ===== Handle: pointer-based drag + click → menu =====
+  var dragStartX = 0;
+  var dragStartY = 0;
+  var didDrag = false;
+  var isGridLayout = false;
+  var DRAG_THRESHOLD = 5;
 
-  handle.addEventListener('dragstart', function(e) {
+  function detectGridLayout(el) {
+    var parent = el.parentElement;
+    if (!parent) return false;
+    var style = window.getComputedStyle(parent);
+    return style.display === 'grid' || style.display === 'inline-grid';
+  }
+
+  function showDropIndicatorForList(rect, after) {
+    var y = after ? rect.bottom : rect.top;
+    dropIndicator.style.display = 'block';
+    dropIndicator.style.top = (y - 1) + 'px';
+    dropIndicator.style.left = rect.left + 'px';
+    dropIndicator.style.width = rect.width + 'px';
+    dropIndicator.style.height = '2px';
+  }
+
+  function showDropIndicatorForGrid(rect, after) {
+    var x = after ? rect.right + 2 : rect.left - 4;
+    dropIndicator.style.display = 'block';
+    dropIndicator.style.top = rect.top + 'px';
+    dropIndicator.style.left = (x - 1) + 'px';
+    dropIndicator.style.width = '2px';
+    dropIndicator.style.height = rect.height + 'px';
+  }
+
+  handle.addEventListener('pointerdown', function(e) {
     if (!handleTarget) return;
+    e.preventDefault();
+    dragStartX = e.clientX;
+    dragStartY = e.clientY;
+    didDrag = false;
     dragEl = handleTarget;
-    isDragging = true;
-    dragEl.style.opacity = '0.4';
-    dragEl.style.outline = '2px dashed #3b82f6';
-    dragEl.style.outlineOffset = '2px';
-    e.dataTransfer.effectAllowed = 'move';
-    e.dataTransfer.setData('text/plain', '');
-    // Use the element as the drag ghost
-    var rect = dragEl.getBoundingClientRect();
-    e.dataTransfer.setDragImage(dragEl, rect.width / 2, rect.height / 2);
-    hideMenu();
-    hideHandle();
+    isGridLayout = detectGridLayout(dragEl);
+    handle.setPointerCapture(e.pointerId);
   });
 
-  document.addEventListener('dragover', function(e) {
-    if (!isDragging || !dragEl) return;
-    e.preventDefault();
-    e.dataTransfer.dropEffect = 'move';
+  handle.addEventListener('pointermove', function(e) {
+    if (!dragEl) return;
+
+    var dist = Math.sqrt(Math.pow(e.clientX - dragStartX, 2) + Math.pow(e.clientY - dragStartY, 2));
+    if (!isDragging && dist > DRAG_THRESHOLD) {
+      isDragging = true;
+      didDrag = true;
+      hideMenu();
+      dragEl.style.opacity = '0.4';
+      dragEl.style.outline = '2px dashed #3b82f6';
+      dragEl.style.outlineOffset = '2px';
+      dragEl.style.pointerEvents = 'none';
+    }
+
+    if (!isDragging) return;
+
+    // Temporarily hide indicator so elementFromPoint doesn't hit it
+    dropIndicator.style.display = 'none';
     var target = document.elementFromPoint(e.clientX, e.clientY);
     if (!target) return;
     var siblingTarget = target.closest(REORDERABLE_SELECTOR);
@@ -278,26 +306,57 @@ export const EDITOR_BRIDGE_SCRIPT = `
       dropTarget = null;
       return;
     }
+
     var rect = siblingTarget.getBoundingClientRect();
-    dropAfter = e.clientY > rect.top + rect.height / 2;
+    if (isGridLayout) {
+      // For grids: use X position to determine before/after
+      dropAfter = e.clientX > rect.left + rect.width / 2;
+      showDropIndicatorForGrid(rect, dropAfter);
+    } else {
+      // For lists: use Y position
+      dropAfter = e.clientY > rect.top + rect.height / 2;
+      showDropIndicatorForList(rect, dropAfter);
+    }
     dropTarget = siblingTarget;
-    var indicatorY = dropAfter ? rect.bottom : rect.top;
-    dropIndicator.style.display = 'block';
-    dropIndicator.style.top = (indicatorY - 1) + 'px';
-    dropIndicator.style.left = rect.left + 'px';
-    dropIndicator.style.width = rect.width + 'px';
   });
 
-  document.addEventListener('drop', function(e) {
-    e.preventDefault();
-    if (!isDragging || !dragEl || !dropTarget) return;
-    if (dropAfter) { dropTarget.after(dragEl); } else { dropTarget.before(dragEl); }
-    selectElement(dragEl);
-    notifyDomChange();
+  handle.addEventListener('pointerup', function(e) {
+    if (isDragging && dragEl && dropTarget) {
+      if (dropAfter) { dropTarget.after(dragEl); } else { dropTarget.before(dragEl); }
+      selectElement(dragEl);
+      notifyDomChange();
+    }
+
+    // Reset drag state
+    if (dragEl) {
+      dragEl.style.opacity = '';
+      dragEl.style.outline = '';
+      dragEl.style.outlineOffset = '';
+      dragEl.style.pointerEvents = '';
+    }
+    isDragging = false;
+    dragEl = null;
+    dropTarget = null;
+    dropIndicator.style.display = '';
+
+    // If it was a click (no drag), toggle the context menu
+    if (!didDrag && handleTarget) {
+      selectElement(handleTarget);
+      if (menu.style.display === 'block') {
+        hideMenu();
+      } else {
+        showMenu();
+      }
+    }
   });
 
-  document.addEventListener('dragend', function(e) {
-    if (dragEl) { dragEl.style.opacity = ''; dragEl.style.outline = ''; dragEl.style.outlineOffset = ''; }
+  handle.addEventListener('pointercancel', function(e) {
+    if (dragEl) {
+      dragEl.style.opacity = '';
+      dragEl.style.outline = '';
+      dragEl.style.outlineOffset = '';
+      dragEl.style.pointerEvents = '';
+    }
     isDragging = false;
     dragEl = null;
     dropTarget = null;
@@ -545,10 +604,9 @@ export const EDITOR_OVERRIDE_CSS = `
   .se-menu-danger { color: #dc2626 !important; }
   .se-menu-danger:hover { background: #fef2f2 !important; }
 
-  /* Drop indicator */
+  /* Drop indicator — works both horizontal (lists) and vertical (grids) */
   .se-drop-indicator {
     position: fixed;
-    height: 2px;
     background: #3b82f6;
     border-radius: 1px;
     z-index: 9998;
@@ -559,12 +617,11 @@ export const EDITOR_OVERRIDE_CSS = `
   .se-drop-indicator::after {
     content: '';
     position: absolute;
-    top: -3px;
     width: 8px;
     height: 8px;
     border-radius: 50%;
     background: #3b82f6;
   }
-  .se-drop-indicator::before { left: -4px; }
-  .se-drop-indicator::after { right: -4px; }
+  .se-drop-indicator::before { top: -3px; left: -3px; }
+  .se-drop-indicator::after { bottom: -3px; right: -3px; }
 </style>`;
