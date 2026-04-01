@@ -34,7 +34,16 @@ export default function App() {
 
   return (
     <div className="app-shell">
-      <EditorToolbar onPlay={presentation ? () => setIsPresenting(true) : undefined} />
+      <EditorToolbar onPlay={presentation ? () => {
+        // Deselect everything before presenting
+        useEditorStore.getState().setSelectedElement(null);
+        useEditorStore.getState().setIsEditing(false);
+        // Tell the iframe to deselect too
+        const iframe = document.querySelector('.editor-canvas__iframe') as HTMLIFrameElement | null;
+        if (iframe?.contentWindow) iframe.contentWindow.postMessage({ type: 'deselect' }, '*');
+        // Small delay to let the deselect propagate before serializing
+        setTimeout(() => setIsPresenting(true), 50);
+      } : undefined} />
 
       <div className="app-sidebar">
         {/* Tab bar */}
