@@ -1,0 +1,56 @@
+import { usePresentationList } from '../../hooks/usePresentationList';
+import { usePresentation } from '../../hooks/usePresentation';
+import { useEditorStore } from '../../store/editor-store';
+
+function formatSize(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+function formatDate(iso: string): string {
+  const d = new Date(iso);
+  return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+}
+
+export function FileBrowser() {
+  const { files } = usePresentationList();
+  const { open } = usePresentation();
+  const activeFile = useEditorStore((s) => s.presentation?.filename);
+
+  if (files.length === 0) {
+    return (
+      <div className="empty-state" style={{ padding: '32px 16px' }}>
+        <div className="empty-state__title">No presentations</div>
+        <div className="empty-state__desc">
+          Add .html slide decks to the <code>presentations/</code> folder
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+      {files.map((file) => (
+        <div
+          key={file.name}
+          className={`file-item ${file.name === activeFile ? 'file-item--active' : ''}`}
+          onClick={() => open(file.name)}
+        >
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" style={{ flexShrink: 0, color: 'var(--color-gray-400)' }}>
+            <rect x="4" y="2" width="16" height="20" rx="2" />
+            <line x1="8" y1="6" x2="16" y2="6" />
+            <line x1="8" y1="10" x2="16" y2="10" />
+            <line x1="8" y1="14" x2="12" y2="14" />
+          </svg>
+          <div style={{ minWidth: 0, flex: 1 }}>
+            <div className="file-item__name">{file.name.replace('.html', '')}</div>
+            <div className="file-item__meta">
+              {formatSize(file.size)} &middot; {formatDate(file.modified)}
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}

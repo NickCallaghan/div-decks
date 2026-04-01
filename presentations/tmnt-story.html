@@ -1,0 +1,861 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+
+
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Teenage Mutant Ninja Turtles — The Origin Story</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@200;400;600;800&amp;family=Fragment+Mono:wght@400&amp;display=swap" rel="stylesheet">
+<style>
+  /* ============ THEME: Paper & Ink — Sewer Edition ============ */
+  :root {
+    --font-body: 'Bricolage Grotesque', 'Avenir Next', sans-serif;
+    --font-mono: 'Fragment Mono', 'SF Mono', Consolas, monospace;
+    --bg: #faf7f5;
+    --surface: #ffffff;
+    --surface2: #f3eeea;
+    --surface-elevated: #fffcf8;
+    --border: rgba(0, 0, 0, 0.06);
+    --border-bright: rgba(0, 0, 0, 0.12);
+    --text: #2a2320;
+    --text-dim: #8a7e74;
+    --accent: #c2410c;
+    --accent-dim: rgba(194, 65, 12, 0.06);
+    --green: #4d7c0f;
+    --green-dim: rgba(77, 124, 15, 0.08);
+    --blue: #0369a1;
+    --blue-dim: rgba(3, 105, 161, 0.08);
+    --purple: #7e22ce;
+    --purple-dim: rgba(126, 34, 206, 0.08);
+    --red: #be123c;
+    --red-dim: rgba(190, 18, 60, 0.08);
+    --orange: #c2410c;
+    --orange-dim: rgba(194, 65, 12, 0.08);
+    --leo-blue: #1d4ed8;
+    --raph-red: #dc2626;
+    --donnie-purple: #7e22ce;
+    --mikey-orange: #ea580c;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #1c1714;
+      --surface: #262019;
+      --surface2: #302820;
+      --surface-elevated: #3a3028;
+      --border: rgba(255, 240, 220, 0.06);
+      --border-bright: rgba(255, 240, 220, 0.12);
+      --text: #ede5da;
+      --text-dim: #9a8e82;
+      --accent: #ea580c;
+      --accent-dim: rgba(234, 88, 12, 0.1);
+      --green: #65a30d;
+      --green-dim: rgba(101, 163, 13, 0.1);
+      --blue: #0ea5e9;
+      --blue-dim: rgba(14, 165, 233, 0.1);
+      --purple: #a855f7;
+      --purple-dim: rgba(168, 85, 247, 0.1);
+      --red: #f43f5e;
+      --red-dim: rgba(244, 63, 94, 0.1);
+      --orange: #f97316;
+      --orange-dim: rgba(249, 115, 22, 0.1);
+      --leo-blue: #60a5fa;
+      --raph-red: #f87171;
+      --donnie-purple: #c084fc;
+      --mikey-orange: #fb923c;
+    }
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: var(--font-body);
+    color: var(--text);
+    background: var(--bg);
+    overflow: hidden;
+  }
+
+  /* ============ DECK ENGINE ============ */
+  .deck {
+    height: 100dvh;
+    overflow-y: auto;
+    scroll-snap-type: y mandatory;
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .slide {
+    height: 100dvh;
+    scroll-snap-align: start;
+    overflow: hidden;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: clamp(40px, 6vh, 80px) clamp(40px, 8vw, 120px);
+    isolation: isolate;
+    opacity: 0;
+    transform: translateY(40px) scale(0.98);
+    transition:
+      opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1),
+      transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .slide.visible {
+    opacity: 1;
+    transform: none;
+  }
+
+  .slide .reveal {
+    opacity: 0;
+    transform: translateY(20px);
+    transition:
+      opacity 0.5s cubic-bezier(0.16, 1, 0.3, 1),
+      transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .slide.visible .reveal { opacity: 1; transform: none; }
+  .slide.visible .reveal:nth-child(1) { transition-delay: 0.1s; }
+  .slide.visible .reveal:nth-child(2) { transition-delay: 0.2s; }
+  .slide.visible .reveal:nth-child(3) { transition-delay: 0.3s; }
+  .slide.visible .reveal:nth-child(4) { transition-delay: 0.4s; }
+  .slide.visible .reveal:nth-child(5) { transition-delay: 0.5s; }
+  .slide.visible .reveal:nth-child(6) { transition-delay: 0.6s; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .slide, .slide .reveal {
+      opacity: 1 !important;
+      transform: none !important;
+      transition: none !important;
+    }
+  }
+
+  /* ============ NAV CHROME ============ */
+  .deck-progress {
+    position: fixed; top: 0; left: 0; height: 3px;
+    background: var(--accent); z-index: 100;
+    transition: width 0.3s ease; pointer-events: none;
+  }
+
+  .deck-dots {
+    position: fixed; right: clamp(12px, 2vw, 24px); top: 50%;
+    transform: translateY(-50%); display: flex; flex-direction: column;
+    gap: 8px; z-index: 100; padding: 8px;
+    background: color-mix(in srgb, var(--bg) 60%, transparent 40%);
+    border-radius: 20px;
+    backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
+  }
+
+  .deck-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--text-dim); opacity: 0.3; border: none; padding: 0;
+    cursor: pointer; transition: opacity 0.2s ease, transform 0.2s ease;
+  }
+  .deck-dot:hover { opacity: 0.6; }
+  .deck-dot.active { opacity: 1; transform: scale(1.5); background: var(--accent); }
+
+  .deck-counter {
+    position: fixed; bottom: clamp(12px, 2vh, 24px); right: clamp(12px, 2vw, 24px);
+    font-family: var(--font-mono); font-size: 12px; color: var(--text-dim);
+    z-index: 100; font-variant-numeric: tabular-nums;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  }
+
+  .deck-hints {
+    position: fixed; bottom: clamp(12px, 2vh, 24px); left: 50%;
+    transform: translateX(-50%); font-family: var(--font-mono);
+    font-size: 11px; color: var(--text-dim); opacity: 0.6; z-index: 100;
+    transition: opacity 0.5s ease; white-space: nowrap;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  }
+  .deck-hints.faded { opacity: 0; pointer-events: none; }
+
+  /* ============ SHARED SLIDE ELEMENTS ============ */
+  .slide__display {
+    font-size: clamp(48px, 10vw, 120px);
+    font-weight: 800;
+    letter-spacing: -3px;
+    line-height: 0.95;
+    text-wrap: balance;
+  }
+
+  .slide__heading {
+    font-size: clamp(28px, 5vw, 48px);
+    font-weight: 600;
+    letter-spacing: -1px;
+    line-height: 1.15;
+    text-wrap: balance;
+  }
+
+  .slide__body {
+    font-size: clamp(16px, 2.2vw, 22px);
+    line-height: 1.6;
+    color: var(--text-dim);
+    text-wrap: pretty;
+  }
+
+  .slide__subtitle {
+    font-family: var(--font-mono);
+    font-size: clamp(12px, 1.5vw, 18px);
+    color: var(--text-dim);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+
+  .slide__label {
+    font-family: var(--font-mono);
+    font-size: clamp(10px, 1.2vw, 13px);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--accent);
+    margin-bottom: 12px;
+  }
+
+  /* ============ DECORATIVE ============ */
+  .slide__decor {
+    position: absolute;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* ============ SLIDE TYPE: TITLE ============ */
+  .slide--title {
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    background-image: radial-gradient(ellipse at 50% 30%, var(--green-dim) 0%, transparent 50%);
+  }
+  .slide--title .slide__display { color: var(--green); }
+
+  /* ============ SLIDE TYPE: DIVIDER ============ */
+  .slide--divider { justify-content: center; }
+  .slide--divider .slide__number {
+    font-size: clamp(100px, 22vw, 260px);
+    font-weight: 200;
+    line-height: 0.85;
+    opacity: 0.06;
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -55%);
+    pointer-events: none;
+    font-variant-numeric: tabular-nums;
+    color: var(--accent);
+  }
+
+  /* ============ SLIDE TYPE: CONTENT ============ */
+  .slide--content .slide__inner {
+    display: grid;
+    grid-template-columns: 3fr 2fr;
+    gap: clamp(24px, 4vw, 60px);
+    align-items: center;
+    width: 100%;
+  }
+
+  .slide__bullets {
+    list-style: none;
+    padding: 0;
+  }
+  .slide__bullets li {
+    padding: 10px 0 10px 24px;
+    position: relative;
+    font-size: clamp(16px, 2vw, 22px);
+    line-height: 1.5;
+    color: var(--text-dim);
+  }
+  .slide__bullets li::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 20px;
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--accent);
+  }
+
+  .slide__aside {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 200px;
+  }
+
+  /* ============ SLIDE TYPE: SPLIT ============ */
+  .slide--split { padding: 0; }
+  .slide--split .slide__panels {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    height: 100%;
+  }
+  .slide--split .slide__panel {
+    padding: clamp(40px, 6vh, 80px) clamp(32px, 4vw, 60px);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+  .slide--split .slide__panel--primary { background: var(--surface); }
+  .slide--split .slide__panel--secondary {
+    background: var(--surface2);
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  /* ============ SLIDE TYPE: DASHBOARD ============ */
+  .slide--dashboard .slide__kpis {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(clamp(140px, 20vw, 220px), 1fr));
+    gap: clamp(12px, 2vw, 24px);
+  }
+
+  .slide__kpi {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: clamp(16px, 3vh, 32px) clamp(16px, 2vw, 24px);
+    min-width: 0;
+    overflow: hidden;
+  }
+
+  .slide__kpi-val {
+    font-size: clamp(36px, 6vw, 64px);
+    font-weight: 800;
+    letter-spacing: -1.5px;
+    line-height: 1.1;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+
+  .slide__kpi-label {
+    font-family: var(--font-mono);
+    font-size: clamp(9px, 1.2vw, 13px);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--text-dim);
+    margin-top: 8px;
+  }
+
+  /* ============ SLIDE TYPE: TABLE ============ */
+  .slide--table { padding: clamp(24px, 4vh, 48px) clamp(24px, 4vw, 60px); }
+
+  .table-wrap {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    flex: 1;
+    min-height: 0;
+  }
+  .table-scroll { overflow-x: auto; }
+
+  .data-table { width: 100%; border-collapse: collapse; }
+  .data-table th {
+    background: var(--surface2);
+    font-family: var(--font-mono);
+    font-size: clamp(10px, 1.3vw, 14px);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--text-dim);
+    text-align: left;
+    padding: clamp(10px, 1.5vh, 16px) clamp(14px, 2vw, 24px);
+    border-bottom: 2px solid var(--border-bright);
+    white-space: nowrap;
+  }
+  .data-table td {
+    padding: clamp(10px, 1.5vh, 16px) clamp(14px, 2vw, 24px);
+    border-bottom: 1px solid var(--border);
+    font-size: clamp(14px, 1.8vw, 20px);
+    vertical-align: top;
+  }
+  .data-table tbody tr:last-child td { border-bottom: none; }
+  .data-table tbody tr:nth-child(even) { background: var(--surface2); }
+  .data-table tbody tr { transition: background 0.15s; }
+  .data-table tbody tr:hover { background: var(--accent-dim); }
+
+  /* ============ SLIDE TYPE: QUOTE ============ */
+  .slide--quote {
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    padding: clamp(60px, 10vh, 120px) clamp(60px, 12vw, 200px);
+  }
+  .slide__quote-mark {
+    font-size: clamp(80px, 14vw, 180px);
+    line-height: 0.5;
+    opacity: 0.06;
+    font-family: Georgia, serif;
+    pointer-events: none;
+    margin-bottom: -20px;
+    color: var(--accent);
+  }
+  .slide--quote blockquote {
+    font-size: clamp(24px, 4vw, 48px);
+    font-weight: 400;
+    line-height: 1.35;
+    font-style: italic;
+  }
+  .slide--quote cite {
+    font-family: var(--font-mono);
+    font-size: clamp(11px, 1.4vw, 14px);
+    font-style: normal;
+    margin-top: clamp(16px, 3vh, 32px);
+    display: block;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--text-dim);
+  }
+
+  /* ============ SLIDE TYPE: FULL-BLEED ============ */
+  .slide--bleed {
+    padding: 0;
+    justify-content: flex-end;
+  }
+  .slide__bg {
+    position: absolute; inset: 0;
+    background-size: cover; background-position: center;
+    z-index: 0;
+  }
+  .slide__bg--gradient {
+    background: linear-gradient(135deg, #1a3d0f 0%, #0f2010 40%, #1c1714 100%);
+  }
+  .slide__scrim {
+    position: absolute; inset: 0;
+    background: linear-gradient(to top, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0.2) 40%, transparent 100%);
+    z-index: 1;
+  }
+  .slide--bleed .slide__content {
+    position: relative; z-index: 2;
+    padding: clamp(40px, 6vh, 80px) clamp(40px, 8vw, 120px);
+    color: #ffffff;
+  }
+  .slide--bleed .slide__heading { color: #ffffff; }
+  .slide--bleed .slide__subtitle { color: rgba(255,255,255,0.7); }
+
+  /* ============ TURTLE CARD GRID ============ */
+  .turtle-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: clamp(12px, 2vw, 24px);
+    width: 100%;
+  }
+  .turtle-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: clamp(16px, 2.5vh, 28px) clamp(16px, 2vw, 24px);
+    border-left: 4px solid var(--border);
+    min-width: 0;
+  }
+  .turtle-card__name {
+    font-size: clamp(18px, 2.5vw, 28px);
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    margin-bottom: 4px;
+  }
+  .turtle-card__weapon {
+    font-family: var(--font-mono);
+    font-size: clamp(10px, 1.2vw, 13px);
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--text-dim);
+    margin-bottom: 8px;
+  }
+  .turtle-card__desc {
+    font-size: clamp(14px, 1.6vw, 18px);
+    line-height: 1.5;
+    color: var(--text-dim);
+  }
+
+  /* ============ RESPONSIVE ============ */
+  @media (max-height: 700px) {
+    .slide { padding: clamp(24px, 4vh, 40px) clamp(32px, 6vw, 80px); }
+    .slide__display { font-size: clamp(36px, 8vw, 72px); }
+    .slide--divider .slide__number { font-size: clamp(80px, 16vw, 160px); }
+  }
+  @media (max-height: 600px) {
+    .slide__decor { display: none; }
+    .slide--quote { padding: clamp(32px, 6vh, 60px) clamp(40px, 8vw, 100px); }
+    .slide__quote-mark { display: none; }
+  }
+  @media (max-height: 500px) {
+    .slide { padding: clamp(16px, 3vh, 24px) clamp(24px, 5vw, 48px); }
+    .deck-dots { display: none; }
+    .slide__display { font-size: clamp(28px, 7vw, 48px); }
+  }
+  @media (max-width: 768px) {
+    .slide--content .slide__inner { grid-template-columns: 1fr; }
+    .slide--content .slide__aside { display: none; }
+    .slide--split .slide__panels { grid-template-columns: 1fr; }
+    .turtle-grid { grid-template-columns: 1fr; }
+  }
+</style>
+
+
+
+
+</head>
+<body>
+
+<div class="deck">
+
+  <!-- SLIDE 1: TITLE -->
+  <section class="slide slide--title" style="">
+    <svg class="slide__decor" style="top:0;right:0;" width="120" height="120" viewBox="0 0 120 120">
+      <line x1="120" y1="0" x2="120" y2="40" stroke="var(--green)" stroke-width="2" opacity="0.15"></line>
+      <line x1="80" y1="0" x2="120" y2="0" stroke="var(--green)" stroke-width="2" opacity="0.15"></line>
+    </svg>
+    <svg class="slide__decor" style="bottom:0;left:0;" width="120" height="120" viewBox="0 0 120 120">
+      <line x1="0" y1="80" x2="0" y2="120" stroke="var(--green)" stroke-width="2" opacity="0.15"></line>
+      <line x1="0" y1="120" x2="40" y2="120" stroke="var(--green)" stroke-width="2" opacity="0.15"></line>
+    </svg>
+    <div class="reveal">
+      <p class="slide__subtitle" style="margin-bottom: clamp(16px, 2vh, 32px);" contenteditable="false">Heroes in a Half Shell</p>
+    </div>
+    <h1 class="slide__display reveal" contenteditable="false" style="outline: rgb(59, 130, 246) solid 2px; outline-offset: 2px;" data-se-selected="true">Teenage Mutant Ninja Turtles 3!</h1>
+    <div class="reveal">
+      <p class="slide__subtitle" style="margin-top:clamp(16px,2vh,32px);">The Origin Story</p>
+    </div>
+  </section>
+
+  <!-- SLIDE 2: SECTION DIVIDER — Origin -->
+  <section class="slide slide--divider" style="background-image:radial-gradient(ellipse at 80% 60%, var(--green-dim) 0%, transparent 40%);">
+    <span class="slide__number">01</span>
+    <div>
+      <h2 class="slide__heading reveal">The Origin</h2>
+      <p class="slide__subtitle reveal" style="margin-top:12px;">A canister of mutagen changes everything</p>
+    </div>
+  </section>
+
+  <!-- SLIDE 3: CONTENT — The Accident -->
+  <section class="slide slide--content" style="background-image:radial-gradient(ellipse at 20% 80%, var(--green-dim) 0%, transparent 45%);">
+    <div class="slide__inner">
+      <div>
+        <p class="slide__label reveal">New York City</p>
+        <h2 class="slide__heading reveal">The Accident</h2>
+        <ul class="slide__bullets">
+          <li class="reveal">A young boy carries four pet turtles across a New York street</li>
+          <li class="reveal">A truck swerves to avoid him, sending a canister of radioactive ooze flying</li>
+          <li class="reveal">The canister shatters in the sewer, drenching the turtles in glowing mutagen</li>
+          <li class="reveal">The ooze triggers an extraordinary transformation</li>
+        </ul>
+      </div>
+      <div class="slide__aside reveal">
+        <svg viewBox="0 0 160 160" width="160" height="160">
+          <circle cx="80" cy="80" r="60" fill="none" stroke="var(--green)" stroke-width="2" opacity="0.3"></circle>
+          <circle cx="80" cy="80" r="40" fill="none" stroke="var(--accent)" stroke-width="1.5" opacity="0.4" stroke-dasharray="4 4"></circle>
+          <circle cx="80" cy="80" r="12" fill="var(--green)" opacity="0.3"></circle>
+          <text x="80" y="130" text-anchor="middle" font-family="var(--font-mono)" font-size="10" fill="var(--text-dim)">MUTAGEN</text>
+        </svg>
+      </div>
+    </div>
+  </section>
+
+  <section class="slide slide--content" style="background-image:radial-gradient(ellipse at 75% 30%, var(--accent-dim) 0%, transparent 45%);">
+    <div class="slide__inner">
+      <div>
+        <p class="slide__label reveal">The Sensei</p>
+        <h2 class="slide__heading reveal">Master Splinter</h2>
+        <ul class="slide__bullets">
+          <li class="reveal">Hamato Yoshi, a skilled martial artist, flees Japan after a bitter rivalry with Oroku Saki</li>
+          <li class="reveal">Living in the sewers of New York, he finds the four mutated turtles</li>
+          <li class="reveal">Exposed to the same ooze, Yoshi transforms into a humanoid rat</li>
+          <li class="reveal">He names the turtles after his favourite Renaissance artists and trains them in ninjutsu</li>
+        </ul>
+      </div>
+      <div class="slide__aside reveal">
+        <svg viewBox="0 0 160 160" width="160" height="160">
+          <rect x="50" y="30" width="60" height="80" rx="8" fill="none" stroke="var(--accent)" stroke-width="1.5" opacity="0.3"></rect>
+          <line x1="80" y1="110" x2="80" y2="140" stroke="var(--accent)" stroke-width="1.5" opacity="0.3"></line>
+          <line x1="50" y1="70" x2="30" y2="50" stroke="var(--accent)" stroke-width="1.5" opacity="0.3"></line>
+          <line x1="110" y1="70" x2="130" y2="50" stroke="var(--accent)" stroke-width="1.5" opacity="0.3"></line>
+          <text x="80" y="155" text-anchor="middle" font-family="var(--font-mono)" font-size="10" fill="var(--text-dim)">SENSEI</text>
+        </svg>
+      </div>
+    </div>
+  </section>
+
+  <section class="slide slide--divider" style="background-image:radial-gradient(ellipse at 30% 40%, var(--green-dim) 0%, transparent 40%);">
+    <span class="slide__number">02</span>
+    <div>
+      <h2 class="slide__heading reveal">The Turtles</h2>
+      <p class="slide__subtitle reveal" style="margin-top:12px;">Four brothers, four personalities, four weapons</p>
+    </div>
+  </section>
+
+  <!-- SLIDE 6: TURTLE CARDS -->
+  <section class="slide slide--content" style="padding:clamp(32px,5vh,60px) clamp(32px,6vw,100px);">
+    <h2 class="slide__heading reveal" style="margin-bottom:clamp(12px,2vh,24px);">Meet the Brothers</h2>
+    <div class="turtle-grid">
+      <div class="turtle-card reveal" style="border-left-color:var(--leo-blue);">
+        <div class="turtle-card__name" style="color:var(--leo-blue);">Leonardo</div>
+        <div class="turtle-card__weapon">Twin Katana</div>
+        <div class="turtle-card__desc">The disciplined leader. Leo is devoted to his training and takes his responsibility as the eldest seriously. He wears a blue mask and looks to Splinter for guidance above all else.</div>
+      </div>
+      <div class="turtle-card reveal" style="border-left-color:var(--raph-red);">
+        <div class="turtle-card__name" style="color:var(--raph-red);">Raphael</div>
+        <div class="turtle-card__weapon">Twin Sai</div>
+        <div class="turtle-card__desc">The hothead. Raph is strong, aggressive, and fiercely loyal. He wears a red mask and frequently clashes with Leo over leadership, but his passion drives the team forward in battle.</div>
+      </div>
+      <div class="turtle-card reveal" style="border-left-color:var(--donnie-purple);">
+        <div class="turtle-card__name" style="color:var(--donnie-purple);">Donatello</div>
+        <div class="turtle-card__weapon">Bō Staff</div>
+        <div class="turtle-card__desc">The brains. Donnie is the inventor, engineer, and tech expert. He wears a purple mask and would rather solve problems with science than fists — though his bō staff says otherwise.</div>
+      </div>
+      <div class="turtle-card reveal" style="border-left-color:var(--mikey-orange);">
+        <div class="turtle-card__name" style="color:var(--mikey-orange);">Michelangelo</div>
+        <div class="turtle-card__weapon">Nunchaku</div>
+        <div class="turtle-card__desc">The party dude. Mikey is the youngest, the funniest, and the most free-spirited. He wears an orange mask and keeps morale high with his love of pizza and relentless optimism.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SLIDE 7: QUOTE — Cowabunga -->
+  <section class="slide slide--quote" style="background-image:radial-gradient(ellipse at 50% 50%, var(--green-dim) 0%, transparent 35%);">
+    <div class="slide__quote-mark reveal">“</div>
+    <blockquote class="reveal">
+      Cowabunga!
+    </blockquote>
+    <cite class="reveal">— Michelangelo, on literally every occasion</cite>
+  </section>
+
+  <section class="slide slide--divider" style="background-image:radial-gradient(ellipse at 70% 50%, var(--red-dim) 0%, transparent 40%);">
+    <span class="slide__number">03</span>
+    <div>
+      <h2 class="slide__heading reveal">The Villains</h2>
+      <p class="slide__subtitle reveal" style="margin-top:12px;">The Foot Clan and its ruthless leader</p>
+    </div>
+  </section>
+
+  <!-- SLIDE 9: SPLIT — Shredder vs Splinter -->
+  <section class="slide slide--split">
+    <div class="slide__panels">
+      <div class="slide__panel slide__panel--primary">
+        <p class="slide__label reveal" style="color:var(--red);">Antagonist</p>
+        <h2 class="slide__heading reveal" style="font-size:clamp(22px,3.5vw,36px);">The Shredder</h2>
+        <ul class="slide__bullets" style="margin-top:16px;">
+          <li class="reveal">Oroku Saki, Splinter's bitter rival from Japan</li>
+          <li class="reveal">Leader of the Foot Clan, a deadly ninja army</li>
+          <li class="reveal">Wears razor-sharp armour from head to toe</li>
+          <li class="reveal">Obsessed with destroying Splinter and his students</li>
+        </ul>
+      </div>
+      <div class="slide__panel slide__panel--secondary">
+        <p class="slide__label reveal" style="color:var(--green);">Allies</p>
+        <h2 class="slide__heading reveal" style="font-size:clamp(22px,3.5vw,36px);">Friends on the Surface</h2>
+        <ul class="slide__bullets" style="margin-top:16px;">
+          <li class="reveal">April O'Neil — fearless journalist and first human ally</li>
+          <li class="reveal">Casey Jones — hockey-mask-wearing vigilante</li>
+          <li class="reveal">The turtles live in secret but protect the city above</li>
+          <li class="reveal">A hidden family fighting for an unaware world</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section class="slide slide--content" style="background-image:radial-gradient(ellipse at 60% 70%, var(--red-dim) 0%, transparent 45%);">
+    <div class="slide__inner">
+      <div>
+        <p class="slide__label reveal">The Enemy</p>
+        <h2 class="slide__heading reveal">The Foot Clan</h2>
+        <ul class="slide__bullets">
+          <li class="reveal">An ancient ninja clan with roots in feudal Japan</li>
+          <li class="reveal">Hundreds of faceless soldiers trained in stealth and combat</li>
+          <li class="reveal">Operations span organised crime, technology theft, and world domination</li>
+          <li class="reveal">The turtles' most persistent and dangerous enemy</li>
+        </ul>
+      </div>
+      <div class="slide__aside reveal">
+        <svg viewBox="0 0 160 160" width="160" height="160">
+          <polygon points="80,20 140,70 120,140 40,140 20,70" fill="none" stroke="var(--red)" stroke-width="1.5" opacity="0.3"></polygon>
+          <polygon points="80,45 115,75 105,120 55,120 45,75" fill="none" stroke="var(--red)" stroke-width="1" opacity="0.2" stroke-dasharray="3 3"></polygon>
+          <text x="80" y="155" text-anchor="middle" font-family="var(--font-mono)" font-size="10" fill="var(--text-dim)">FOOT CLAN</text>
+        </svg>
+      </div>
+    </div>
+  </section>
+
+  <section class="slide slide--divider" style="background-image:radial-gradient(ellipse at 40% 60%, var(--accent-dim) 0%, transparent 40%);">
+    <span class="slide__number">04</span>
+    <div>
+      <h2 class="slide__heading reveal">The Battles</h2>
+      <p class="slide__subtitle reveal" style="margin-top:12px;">Rooftops, sewers, and the Technodrome</p>
+    </div>
+  </section>
+
+  <!-- SLIDE 12: TABLE — Key Battles -->
+  <section class="slide slide--table">
+    <h2 class="slide__heading reveal">Key Battles</h2>
+    <div class="table-wrap reveal" style="flex:1; min-height:0; margin-top:clamp(8px,1.5vh,20px);">
+      <div class="table-scroll">
+        <table class="data-table">
+          <thead><tr><th>Battle</th><th>Location</th><th>Enemy</th><th>Outcome</th></tr></thead>
+          <tbody>
+            <tr><td>First Encounter</td><td>NYC Rooftops</td><td>Foot Clan soldiers</td><td style="color:var(--green);">Victory</td></tr>
+            <tr><td>Shredder Showdown</td><td>Shredder's Fortress</td><td>The Shredder</td><td style="color:var(--green);">Victory (barely)</td></tr>
+            <tr><td>Technodrome Assault</td><td>Dimension X</td><td>Krang &amp; Foot</td><td style="color:var(--green);">Victory</td></tr>
+            <tr><td>Bebop &amp; Rocksteady</td><td>Downtown Manhattan</td><td>Mutant henchmen</td><td style="color:var(--green);">Victory</td></tr>
+            <tr><td>The Ambush</td><td>The Sewer Lair</td><td>Foot Clan elite</td><td style="color:var(--accent);">Retreat</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- SLIDE 13: DASHBOARD — Turtle Stats -->
+  <section class="slide slide--dashboard" style="background-image:radial-gradient(ellipse at 50% 30%, var(--green-dim) 0%, transparent 40%);">
+    <h2 class="slide__heading reveal">By the Numbers</h2>
+    <div class="slide__kpis">
+      <div class="slide__kpi reveal">
+        <div class="slide__kpi-val" style="color:var(--green);">4</div>
+        <div class="slide__kpi-label">Brothers</div>
+      </div>
+      <div class="slide__kpi reveal">
+        <div class="slide__kpi-val" style="color:var(--accent);">1984</div>
+        <div class="slide__kpi-label">Year Created</div>
+      </div>
+      <div class="slide__kpi reveal">
+        <div class="slide__kpi-val" style="color:var(--blue);">∞</div>
+        <div class="slide__kpi-label">Pizzas Consumed</div>
+      </div>
+      <div class="slide__kpi reveal">
+        <div class="slide__kpi-val" style="color:var(--accent);">1</div>
+        <div class="slide__kpi-label">Rat Sensei</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="slide slide--divider" style="background-image:radial-gradient(ellipse at 60% 40%, var(--green-dim) 0%, transparent 40%);">
+    <span class="slide__number">05</span>
+    <div>
+      <h2 class="slide__heading reveal">The Legacy</h2>
+      <p class="slide__subtitle reveal" style="margin-top:12px;">From indie comic to global phenomenon</p>
+    </div>
+  </section>
+
+  <section class="slide slide--content" style="background-image:radial-gradient(ellipse at 30% 60%, var(--accent-dim) 0%, transparent 45%);">
+    <div class="slide__inner">
+      <div>
+        <p class="slide__label reveal">Cultural Impact</p>
+        <h2 class="slide__heading reveal">A Franchise Like No Other</h2>
+        <ul class="slide__bullets">
+          <li class="reveal">Created by Kevin Eastman and Peter Laird as a black-and-white indie comic in 1984</li>
+          <li class="reveal">Spawned multiple animated TV series, each redefining the turtles for a new generation</li>
+          <li class="reveal">Six feature films spanning live-action and animation</li>
+          <li class="reveal">Billions in merchandise, video games, and a permanent place in pop culture</li>
+        </ul>
+      </div>
+      <div class="slide__aside reveal">
+        <svg viewBox="0 0 160 160" width="160" height="160">
+          <circle cx="80" cy="80" r="55" fill="none" stroke="var(--green)" stroke-width="1.5" opacity="0.2"></circle>
+          <circle cx="80" cy="80" r="40" fill="none" stroke="var(--green)" stroke-width="1.5" opacity="0.15"></circle>
+          <circle cx="80" cy="80" r="25" fill="none" stroke="var(--green)" stroke-width="1.5" opacity="0.1"></circle>
+          <text x="80" y="85" text-anchor="middle" font-family="var(--font-mono)" font-size="9" font-weight="600" fill="var(--text-dim)">SINCE 1984</text>
+        </svg>
+      </div>
+    </div>
+  </section>
+
+  <section class="slide slide--quote" style="background-image:radial-gradient(ellipse at 50% 50%, var(--accent-dim) 0%, transparent 35%);">
+    <div class="slide__quote-mark reveal">“</div>
+    <blockquote class="reveal">
+      I have always liked… Cowabunga.
+    </blockquote>
+    <cite class="reveal">— Master Splinter</cite>
+  </section>
+
+  <!-- SLIDE 17: FULL-BLEED — Closing -->
+  <section class="slide slide--bleed">
+    <div class="slide__bg slide__bg--gradient"></div>
+    <div class="slide__scrim"></div>
+    <div class="slide__content">
+      <p class="slide__label reveal" style="color:rgba(255,255,255,0.6);">Turtle Power</p>
+      <h2 class="slide__heading reveal">Heroes in a Half Shell</h2>
+      <p class="slide__subtitle reveal" style="color:rgba(255,255,255,0.7); margin-top:12px;">Born in the sewers. Forged in battle. Fuelled by pizza.</p>
+    </div>
+  </section>
+
+</div><!-- /deck -->
+
+<script>
+  // SlideEngine
+  function SlideEngine(){
+    this.deck=document.querySelector('.deck');
+    this.slides=[].slice.call(document.querySelectorAll('.slide'));
+    this.current=0;
+    this.total=this.slides.length;
+    this.buildChrome();
+    this.bindEvents();
+    this.observe();
+    this.update();
+  }
+  SlideEngine.prototype.buildChrome=function(){
+    var bar=document.createElement('div');bar.className='deck-progress';document.body.appendChild(bar);this.bar=bar;
+    var dots=document.createElement('div');dots.className='deck-dots';var self=this;
+    this.slides.forEach(function(_,i){var d=document.createElement('button');d.className='deck-dot';d.title='Slide '+(i+1);d.onclick=function(){self.goTo(i);};dots.appendChild(d);});
+    document.body.appendChild(dots);this.dots=[].slice.call(dots.children);
+    var ctr=document.createElement('div');ctr.className='deck-counter';document.body.appendChild(ctr);this.counter=ctr;
+    var hints=document.createElement('div');hints.className='deck-hints';hints.textContent='\u2190 \u2192 or scroll to navigate';document.body.appendChild(hints);this.hints=hints;
+    this.hintTimer=setTimeout(function(){hints.classList.add('faded');},4000);
+  };
+  SlideEngine.prototype.bindEvents=function(){
+    var self=this;
+    document.addEventListener('keydown',function(e){
+      if(e.target.closest('.mermaid-wrap,.table-scroll,.code-scroll,input,textarea,[contenteditable]'))return;
+      if(['ArrowDown','ArrowRight',' ','PageDown'].indexOf(e.key)>-1){e.preventDefault();self.next();}
+      else if(['ArrowUp','ArrowLeft','PageUp'].indexOf(e.key)>-1){e.preventDefault();self.prev();}
+      else if(e.key==='Home'){e.preventDefault();self.goTo(0);}
+      else if(e.key==='End'){e.preventDefault();self.goTo(self.total-1);}
+      self.fadeHints();
+    });
+    var tY;
+    this.deck.addEventListener('touchstart',function(e){tY=e.touches[0].clientY;},{passive:true});
+    this.deck.addEventListener('touchend',function(e){var dy=tY-e.changedTouches[0].clientY;if(Math.abs(dy)>50){dy>0?self.next():self.prev();}});
+  };
+  SlideEngine.prototype.observe=function(){
+    var self=this;
+    var obs=new IntersectionObserver(function(entries){entries.forEach(function(entry){if(entry.isIntersecting){entry.target.classList.add('visible');self.current=self.slides.indexOf(entry.target);self.update();}});},{threshold:0.5});
+    this.slides.forEach(function(s){obs.observe(s);});
+  };
+  SlideEngine.prototype.goTo=function(i){this.slides[Math.max(0,Math.min(i,this.total-1))].scrollIntoView({behavior:'smooth'});};
+  SlideEngine.prototype.next=function(){if(this.current<this.total-1)this.goTo(this.current+1);};
+  SlideEngine.prototype.prev=function(){if(this.current>0)this.goTo(this.current-1);};
+  SlideEngine.prototype.update=function(){
+    this.bar.style.width=((this.current+1)/this.total*100)+'%';
+    var c=this.current;this.dots.forEach(function(d,i){d.classList.toggle('active',i===c);});
+    this.counter.textContent=(this.current+1)+' / '+this.total;
+  };
+  SlideEngine.prototype.fadeHints=function(){clearTimeout(this.hintTimer);this.hints.classList.add('faded');};
+
+  // Auto-fit
+  function autoFit(){
+    document.querySelectorAll('.slide__kpi-val').forEach(function(el){
+      if(el.scrollWidth>el.clientWidth){
+        var s=el.clientWidth/el.scrollWidth;
+        el.style.transform='scale('+s+')';
+        el.style.transformOrigin='left top';
+      }
+    });
+    document.querySelectorAll('.slide--quote blockquote').forEach(function(el){
+      var len=el.textContent.trim().length;
+      if(len>100){
+        var scale=Math.max(0.5,100/len);
+        var fs=parseFloat(getComputedStyle(el).fontSize);
+        el.style.fontSize=Math.max(16,Math.round(fs*scale))+'px';
+      }
+    });
+  }
+
+  document.addEventListener('DOMContentLoaded',function(){
+    autoFit();
+    new SlideEngine();
+  });
+</script>
+
+</body>
+</html>
