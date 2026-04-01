@@ -16,23 +16,27 @@ export function PresentationMode({ onExit }: PresentationModeProps) {
     if (!presentation) return '';
     const html = serializePresentation(presentation);
     // Inject a script that scrolls to the active slide after SlideEngine inits
+    // No CSS overrides — let the original SlideEngine run exactly as-is.
+    // Only inject a script to start at the current slide.
     const startScript = `
-<style>
-  /* Override fade transitions — all slides always visible, smooth scroll does the sliding */
-  .slide, .slide .reveal {
-    opacity: 1 !important;
-    transform: none !important;
-    transition: none !important;
-  }
-</style>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-  // Start at the active slide (instant, no animation)
+  // Wait for SlideEngine to init, then jump to the active slide instantly
   setTimeout(function() {
+    var deck = document.querySelector('.deck');
     var slides = document.querySelectorAll('.slide');
     var target = slides[${activeSlideIndex}];
-    if (target) target.scrollIntoView({ behavior: 'instant' });
-  }, 100);
+    if (target && deck) {
+      // Temporarily disable smooth scroll to jump without animation
+      deck.style.scrollBehavior = 'auto';
+      target.scrollIntoView();
+      target.classList.add('visible');
+      // Re-enable smooth scroll for subsequent navigation
+      requestAnimationFrame(function() {
+        deck.style.scrollBehavior = 'smooth';
+      });
+    }
+  }, 150);
 });
 </script>`;
     return html.replace('</body>', startScript + '\n</body>');
