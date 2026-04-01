@@ -72,6 +72,37 @@ describe('serializePresentation', () => {
     expect(contentPos).toBeLessThan(titlePos);
   });
 
+  it('strips data-se-selected attributes from output', () => {
+    const model = parsePresentation('test.html', MINIMAL_HTML);
+    model.slides[0].outerHtml = model.slides[0].outerHtml.replace(
+      '<h1>',
+      '<h1 data-se-selected="true" style="outline: 2px solid #3b82f6; outline-offset: 2px;">'
+    );
+    const html = serializePresentation(model);
+    expect(html).not.toContain('data-se-selected');
+    expect(html).not.toContain('outline');
+  });
+
+  it('strips contenteditable attributes from output', () => {
+    const model = parsePresentation('test.html', MINIMAL_HTML);
+    model.slides[0].outerHtml = model.slides[0].outerHtml.replace(
+      '<h1>',
+      '<h1 contenteditable="true">'
+    );
+    const html = serializePresentation(model);
+    expect(html).not.toContain('contenteditable');
+  });
+
+  it('strips se-dragging class from output', () => {
+    const model = parsePresentation('test.html', MINIMAL_HTML);
+    model.slides[1].outerHtml = model.slides[1].outerHtml.replace(
+      'class="slide slide--content"',
+      'class="slide slide--content se-dragging"'
+    );
+    const html = serializePresentation(model);
+    expect(html).not.toContain('se-dragging');
+  });
+
   it('includes slide comments when present', () => {
     const model = parsePresentation('test.html', MINIMAL_HTML);
     // Manually set a comment
