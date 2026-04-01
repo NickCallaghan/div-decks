@@ -5,6 +5,7 @@ import { EditorCanvas } from './components/editor/EditorCanvas';
 import { EditorToolbar } from './components/toolbar/EditorToolbar';
 import { StatusBar } from './components/layout/StatusBar';
 import { ShortcutHints } from './components/layout/ShortcutHints';
+import { PresentationMode } from './components/layout/PresentationMode';
 import { useEditorStore } from './store/editor-store';
 
 type SidebarTab = 'files' | 'slides';
@@ -12,6 +13,7 @@ type SidebarTab = 'files' | 'slides';
 export default function App() {
   const [activeTab, setActiveTab] = useState<SidebarTab>('files');
   const [showShortcuts, setShowShortcuts] = useState(false);
+  const [isPresenting, setIsPresenting] = useState(false);
   const presentation = useEditorStore((s) => s.presentation);
 
   const toggleShortcuts = useCallback(() => setShowShortcuts((v) => !v), []);
@@ -32,7 +34,7 @@ export default function App() {
 
   return (
     <div className="app-shell">
-      <EditorToolbar />
+      <EditorToolbar onPlay={presentation ? () => setIsPresenting(true) : undefined} />
 
       <div className="app-sidebar">
         {/* Tab bar */}
@@ -69,6 +71,7 @@ export default function App() {
       <StatusBar />
 
       {showShortcuts && <ShortcutHints onClose={() => setShowShortcuts(false)} />}
+      {isPresenting && <PresentationMode onExit={() => setIsPresenting(false)} />}
     </div>
   );
 }

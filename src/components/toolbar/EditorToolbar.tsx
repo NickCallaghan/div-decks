@@ -2,7 +2,11 @@ import { useCallback, useEffect } from 'react';
 import { useEditorStore } from '../../store/editor-store';
 import { usePresentation } from '../../hooks/usePresentation';
 
-export function EditorToolbar() {
+interface EditorToolbarProps {
+  onPlay?: () => void;
+}
+
+export function EditorToolbar({ onPlay }: EditorToolbarProps) {
   const presentation = useEditorStore((s) => s.presentation);
   const isDirty = useEditorStore((s) => s.isDirty);
   const selectedElement = useEditorStore((s) => s.selectedElement);
@@ -198,6 +202,15 @@ export function EditorToolbar() {
               </ToolbarButton>
               <Separator />
             </>
+          )}
+
+          {/* Play */}
+          {onPlay && (
+            <ToolbarButton onClick={onPlay} title="Present (Play)">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                <polygon points="6 3 20 12 6 21" />
+              </svg>
+            </ToolbarButton>
           )}
 
           {/* Save */}
