@@ -6,9 +6,8 @@
         "hooks": [
           {
             "type": "command",
-            "if": "Bash(git commit:*)",
-            "command": "npx vitest run --reporter=dot 2>&1",
-            "timeout": 30,
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/pre-commit-tests.sh",
+            "timeout": 60,
             "statusMessage": "Running tests before commit..."
           }
         ]
