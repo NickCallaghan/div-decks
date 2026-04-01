@@ -182,36 +182,20 @@ export function EditorToolbar() {
 
           <Separator />
 
-          {/* Element actions */}
+          {/* Selected element indicator */}
           {selectedElement && (
             <>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                <span style={{ fontSize: 11, color: 'var(--color-gray-400)', marginRight: 4 }}>
+              <span style={{ fontSize: 11, color: 'var(--color-blue-500)', display: 'flex', alignItems: 'center', gap: 4 }}>
+                <span style={{ padding: '2px 6px', background: 'var(--color-blue-50)', borderRadius: 4, fontFamily: 'monospace' }}>
                   &lt;{selectedElement.tagName.toLowerCase()}&gt;
                 </span>
-                <ToolbarButton onClick={handleMoveUp} title="Move element up">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <polyline points="18 15 12 9 6 15" />
-                  </svg>
-                </ToolbarButton>
-                <ToolbarButton onClick={handleMoveDown} title="Move element down">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <polyline points="6 9 12 15 18 9" />
-                  </svg>
-                </ToolbarButton>
-                <ToolbarButton onClick={handleDelete} title="Delete element" danger>
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <polyline points="3 6 5 6 21 6" />
-                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-                  </svg>
-                </ToolbarButton>
-                <ToolbarButton onClick={handleDeselect} title="Deselect (Esc)">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <line x1="18" y1="6" x2="6" y2="18" />
-                    <line x1="6" y1="6" x2="18" y2="18" />
-                  </svg>
-                </ToolbarButton>
-              </div>
+              </span>
+              <ToolbarButton onClick={handleDeselect} title="Deselect (Esc)">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <line x1="18" y1="6" x2="6" y2="18" />
+                  <line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
+              </ToolbarButton>
               <Separator />
             </>
           )}
