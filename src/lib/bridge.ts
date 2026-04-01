@@ -241,15 +241,48 @@ export const EDITOR_BRIDGE_SCRIPT = `
   var dragStartX = 0;
   var dragStartY = 0;
   var didDrag = false;
+  var isGridDrag = false;
   var DRAG_THRESHOLD = 5;
 
+  function detectGridLayout(el) {
+    var p = el.parentElement;
+    if (!p) return false;
+    var style = window.getComputedStyle(p);
+    return style.display === 'grid' || style.display === 'inline-grid';
+  }
+
   function showDropIndicator(rect) {
-    // Always show a horizontal line above the target (insert before)
     dropIndicator.style.display = 'block';
     dropIndicator.style.top = (rect.top - 2) + 'px';
     dropIndicator.style.left = rect.left + 'px';
     dropIndicator.style.width = rect.width + 'px';
     dropIndicator.style.height = '2px';
+    dropIndicator.style.background = '#3b82f6';
+    dropIndicator.style.border = 'none';
+    dropIndicator.style.borderRadius = '1px';
+  }
+
+  function showSwapIndicator(rect) {
+    // Highlight the target card with a dashed outline
+    dropIndicator.style.display = 'block';
+    dropIndicator.style.top = (rect.top - 2) + 'px';
+    dropIndicator.style.left = (rect.left - 2) + 'px';
+    dropIndicator.style.width = (rect.width + 4) + 'px';
+    dropIndicator.style.height = (rect.height + 4) + 'px';
+    dropIndicator.style.background = 'transparent';
+    dropIndicator.style.border = '2px dashed #3b82f6';
+    dropIndicator.style.borderRadius = '8px';
+  }
+
+  function swapElements(a, b) {
+    var parentA = a.parentElement;
+    var parentB = b.parentElement;
+    var nextA = a.nextSibling;
+    var nextB = b.nextSibling;
+    // Insert a before b's next sibling (i.e., where b was)
+    parentB.insertBefore(a, nextB);
+    // Insert b before a's original next sibling (i.e., where a was)
+    parentA.insertBefore(b, nextA);
   }
 
   handle.addEventListener('pointerdown', function(e) {
@@ -259,6 +292,7 @@ export const EDITOR_BRIDGE_SCRIPT = `
     dragStartY = e.clientY;
     didDrag = false;
     dragEl = handleTarget;
+    isGridDrag = detectGridLayout(dragEl);
     handle.setPointerCapture(e.pointerId);
   });
 
@@ -290,13 +324,21 @@ export const EDITOR_BRIDGE_SCRIPT = `
     }
 
     var rect = siblingTarget.getBoundingClientRect();
-    showDropIndicator(rect);
+    if (isGridDrag) {
+      showSwapIndicator(rect);
+    } else {
+      showDropIndicator(rect);
+    }
     dropTarget = siblingTarget;
   });
 
   handle.addEventListener('pointerup', function(e) {
     if (isDragging && dragEl && dropTarget) {
-      dropTarget.before(dragEl);
+      if (isGridDrag) {
+        swapElements(dragEl, dropTarget);
+      } else {
+        dropTarget.before(dragEl);
+      }
       selectElement(dragEl);
       notifyDomChange();
     }
@@ -578,15 +620,15 @@ export const EDITOR_OVERRIDE_CSS = `
   .se-menu-danger { color: #dc2626 !important; }
   .se-menu-danger:hover { background: #fef2f2 !important; }
 
-  /* Drop indicator — works both horizontal (lists) and vertical (grids) */
+  /* Drop indicator — line for lists, highlight for grid swap */
   .se-drop-indicator {
     position: fixed;
     background: #3b82f6;
     border-radius: 1px;
     z-index: 9998;
     pointer-events: none;
-    box-shadow: 0 0 0 1px rgba(59,130,246,0.3);
   }
+  /* When used as a line (height=2px), show end dots */
   .se-drop-indicator::before,
   .se-drop-indicator::after {
     content: '';
