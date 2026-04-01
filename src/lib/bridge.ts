@@ -241,32 +241,15 @@ export const EDITOR_BRIDGE_SCRIPT = `
   var dragStartX = 0;
   var dragStartY = 0;
   var didDrag = false;
-  var isGridLayout = false;
   var DRAG_THRESHOLD = 5;
 
-  function detectGridLayout(el) {
-    var parent = el.parentElement;
-    if (!parent) return false;
-    var style = window.getComputedStyle(parent);
-    return style.display === 'grid' || style.display === 'inline-grid';
-  }
-
-  function showDropIndicatorForList(rect, after) {
-    var y = after ? rect.bottom : rect.top;
+  function showDropIndicator(rect) {
+    // Always show a horizontal line above the target (insert before)
     dropIndicator.style.display = 'block';
-    dropIndicator.style.top = (y - 1) + 'px';
+    dropIndicator.style.top = (rect.top - 2) + 'px';
     dropIndicator.style.left = rect.left + 'px';
     dropIndicator.style.width = rect.width + 'px';
     dropIndicator.style.height = '2px';
-  }
-
-  function showDropIndicatorForGrid(rect, after) {
-    var x = after ? rect.right + 2 : rect.left - 4;
-    dropIndicator.style.display = 'block';
-    dropIndicator.style.top = rect.top + 'px';
-    dropIndicator.style.left = (x - 1) + 'px';
-    dropIndicator.style.width = '2px';
-    dropIndicator.style.height = rect.height + 'px';
   }
 
   handle.addEventListener('pointerdown', function(e) {
@@ -276,7 +259,6 @@ export const EDITOR_BRIDGE_SCRIPT = `
     dragStartY = e.clientY;
     didDrag = false;
     dragEl = handleTarget;
-    isGridLayout = detectGridLayout(dragEl);
     handle.setPointerCapture(e.pointerId);
   });
 
@@ -308,21 +290,13 @@ export const EDITOR_BRIDGE_SCRIPT = `
     }
 
     var rect = siblingTarget.getBoundingClientRect();
-    if (isGridLayout) {
-      // For grids: use X position to determine before/after
-      dropAfter = e.clientX > rect.left + rect.width / 2;
-      showDropIndicatorForGrid(rect, dropAfter);
-    } else {
-      // For lists: use Y position
-      dropAfter = e.clientY > rect.top + rect.height / 2;
-      showDropIndicatorForList(rect, dropAfter);
-    }
+    showDropIndicator(rect);
     dropTarget = siblingTarget;
   });
 
   handle.addEventListener('pointerup', function(e) {
     if (isDragging && dragEl && dropTarget) {
-      if (dropAfter) { dropTarget.after(dragEl); } else { dropTarget.before(dragEl); }
+      dropTarget.before(dragEl);
       selectElement(dragEl);
       notifyDomChange();
     }
