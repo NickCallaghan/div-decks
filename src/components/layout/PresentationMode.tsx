@@ -19,10 +19,20 @@ export function PresentationMode({ onExit }: PresentationModeProps) {
     const startScript = `
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+  // Patch scrollIntoView to use instant behavior — prevents smooth scroll
+  // hitting every snap point when navigating between non-adjacent slides
+  var origScrollIntoView = Element.prototype.scrollIntoView;
+  Element.prototype.scrollIntoView = function(opts) {
+    if (typeof opts === 'object') {
+      opts.behavior = 'instant';
+    }
+    return origScrollIntoView.call(this, opts || { behavior: 'instant' });
+  };
+
   setTimeout(function() {
     var slides = document.querySelectorAll('.slide');
     var target = slides[${activeSlideIndex}];
-    if (target) target.scrollIntoView();
+    if (target) target.scrollIntoView({ behavior: 'instant' });
   }, 100);
 });
 </script>`;
