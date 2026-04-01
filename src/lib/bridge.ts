@@ -68,7 +68,18 @@ export const EDITOR_BRIDGE_SCRIPT = `
   function notifyDomChange() {
     var section = document.querySelector('.slide');
     if (section) {
-      parent.postMessage({ type: 'dom-updated', outerHtml: section.outerHTML }, '*');
+      // Clone and clean before sending — strip editor artifacts
+      var clone = section.cloneNode(true);
+      clone.querySelectorAll('.se-dragging').forEach(function(el) { el.classList.remove('se-dragging'); });
+      clone.querySelectorAll('[data-se-selected]').forEach(function(el) {
+        el.removeAttribute('data-se-selected');
+        el.style.outline = '';
+        el.style.outlineOffset = '';
+      });
+      clone.querySelectorAll('[contenteditable]').forEach(function(el) {
+        el.removeAttribute('contenteditable');
+      });
+      parent.postMessage({ type: 'dom-updated', outerHtml: clone.outerHTML }, '*');
     }
   }
 
@@ -306,10 +317,7 @@ export const EDITOR_BRIDGE_SCRIPT = `
       didDrag = true;
       hideMenu();
       hideHandle();
-      dragEl.style.opacity = '0.4';
-      dragEl.style.outline = '2px dashed #3b82f6';
-      dragEl.style.outlineOffset = '2px';
-      dragEl.style.pointerEvents = 'none';
+      dragEl.classList.add('se-dragging');
     }
 
     if (!isDragging) return;
@@ -349,10 +357,7 @@ export const EDITOR_BRIDGE_SCRIPT = `
     }
 
     // Reset drag state
-    dragEl.style.opacity = '';
-    dragEl.style.outline = '';
-    dragEl.style.outlineOffset = '';
-    dragEl.style.pointerEvents = '';
+    dragEl.classList.remove('se-dragging');
     isDragging = false;
     isGridDrag = false;
     dropTarget = null;
@@ -512,6 +517,14 @@ export const EDITOR_BRIDGE_SCRIPT = `
     }
   });
 
+  // Cleanup any stale drag styles from previous sessions
+  document.querySelectorAll('[style*="pointer-events"]').forEach(function(el) {
+    el.style.pointerEvents = '';
+  });
+  document.querySelectorAll('[style*="opacity: 0.4"]').forEach(function(el) {
+    if (!el.classList.contains('se-dragging')) el.style.opacity = '';
+  });
+
   parent.postMessage({ type: 'bridge-ready' }, '*');
 })();
 </script>`;
@@ -578,6 +591,14 @@ export const EDITOR_OVERRIDE_CSS = `
     outline: none !important;
   }
   .se-handle:active { cursor: grabbing; }
+
+  /* Element being dragged */
+  .se-dragging {
+    opacity: 0.4 !important;
+    outline: 2px dashed #3b82f6 !important;
+    outline-offset: 2px;
+    pointer-events: none !important;
+  }
   .se-handle svg { pointer-events: none; }
   .se-handle:hover *, .se-menu:hover *, .se-handle *, .se-menu * {
     outline: none !important;
