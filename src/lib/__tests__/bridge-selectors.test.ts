@@ -65,6 +65,8 @@ const REORDERABLE_SELECTOR = [
   "tbody > tr",
 ].join(",");
 
+const ATOMIC_SELECTOR = "div.ve-card, div.slide__kpi, div.slide__panel";
+
 function isTextElement(el: Element): boolean {
   if (!el || el.closest("svg") || el.closest("script")) return false;
   if (el.closest(".mermaid-wrap") || el.closest(".slide__decor")) return false;
@@ -75,6 +77,13 @@ function findHandleTarget(el: Element | null): Element | null {
   if (!el || el.tagName === "HTML" || el.tagName === "BODY") return null;
   if (el.classList?.contains("deck") || el.classList?.contains("slide"))
     return null;
+  // Atomic containers absorb their children
+  const atomic = el.closest(ATOMIC_SELECTOR);
+  if (atomic) {
+    if (atomic.previousElementSibling || atomic.nextElementSibling)
+      return atomic;
+    return null;
+  }
   let target = el.closest(REORDERABLE_SELECTOR);
   while (target) {
     if (target.previousElementSibling || target.nextElementSibling)
@@ -293,6 +302,55 @@ describe("bridge selectors", () => {
       // h2 matches directly as a semantic element, has siblings (p, ul)
       expect(target).not.toBeNull();
       expect(target!.tagName).toBe("H2");
+    });
+
+    it("hovering h4 inside a ve-card returns the card, not the h4", () => {
+      const root = html(`<section class="slide">
+        <div class="card-grid">
+          <div class="ve-card"><h4>Title</h4><p>Desc</p></div>
+          <div class="ve-card"><h4>Other</h4><p>Desc</p></div>
+        </div>
+      </section>`);
+      const h4 = root.querySelector("h4")!;
+      const target = findHandleTarget(h4);
+      expect(target).not.toBeNull();
+      expect(target!.classList.contains("ve-card")).toBe(true);
+    });
+
+    it("hovering KPI value returns the KPI card, not the value", () => {
+      const root = html(`<section class="slide">
+        <div class="slide__kpis">
+          <div class="slide__kpi"><div class="slide__kpi-val">42</div><div class="slide__kpi-label">Test</div></div>
+          <div class="slide__kpi"><div class="slide__kpi-val">99</div><div class="slide__kpi-label">Other</div></div>
+        </div>
+      </section>`);
+      const val = root.querySelector(".slide__kpi-val")!;
+      const target = findHandleTarget(val);
+      expect(target!.classList.contains("slide__kpi")).toBe(true);
+    });
+
+    it("hovering p inside a panel returns the panel", () => {
+      const root = html(`<section class="slide">
+        <div class="slide__panels">
+          <div class="slide__panel"><p>Panel A content</p></div>
+          <div class="slide__panel"><p>Panel B content</p></div>
+        </div>
+      </section>`);
+      const p = root.querySelector("p")!;
+      const target = findHandleTarget(p);
+      expect(target!.classList.contains("slide__panel")).toBe(true);
+    });
+
+    it("lone atomic container with no siblings returns null", () => {
+      const root = html(`<section class="slide">
+        <div class="slide__aside">
+          <div class="ve-card"><h4>Only card</h4></div>
+        </div>
+      </section>`);
+      const h4 = root.querySelector("h4")!;
+      const target = findHandleTarget(h4);
+      // The ve-card has no siblings, so no handle
+      expect(target).toBeNull();
     });
 
     it("skips deck and slide elements", () => {

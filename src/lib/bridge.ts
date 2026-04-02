@@ -167,11 +167,21 @@ export const EDITOR_BRIDGE_SCRIPT = `
     return el.closest(TEXT_SELECTOR) !== null;
   }
 
+  // Atomic containers — always dragged as a unit, children don't get
+  // independent handles. Keep this generic (class prefix matching).
+  var ATOMIC_SELECTOR = 'div.ve-card, div.slide__kpi, div.slide__panel';
+
   // ===== Handle: find target, position, show/hide =====
   function findHandleTarget(el) {
     if (!el || el.tagName === 'HTML' || el.tagName === 'BODY') return null;
     if (el.classList && (el.classList.contains('deck') || el.classList.contains('slide'))) return null;
     if (el.closest('.se-handle') || el.closest('.se-menu')) return null;
+    // If inside an atomic container, the container is always the target
+    var atomic = el.closest(ATOMIC_SELECTOR);
+    if (atomic) {
+      if (atomic.previousElementSibling || atomic.nextElementSibling) return atomic;
+      return null;
+    }
     // Walk up through matching ancestors — if the innermost match has no
     // siblings (nothing to reorder with), try its parent instead
     var target = el.closest(REORDERABLE_SELECTOR);
