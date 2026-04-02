@@ -171,10 +171,15 @@ export const EDITOR_BRIDGE_SCRIPT = `
     if (!el || el.tagName === 'HTML' || el.tagName === 'BODY') return null;
     if (el.classList && (el.classList.contains('deck') || el.classList.contains('slide'))) return null;
     if (el.closest('.se-handle') || el.closest('.se-menu')) return null;
+    // Walk up through matching ancestors — if the innermost match has no
+    // siblings (nothing to reorder with), try its parent instead
     var target = el.closest(REORDERABLE_SELECTOR);
-    if (!target) return null;
-    if (!target.previousElementSibling && !target.nextElementSibling) return null;
-    return target;
+    while (target) {
+      if (target.previousElementSibling || target.nextElementSibling) return target;
+      // No siblings — try the next ancestor
+      target = target.parentElement ? target.parentElement.closest(REORDERABLE_SELECTOR) : null;
+    }
+    return null;
   }
 
   function positionHandle(el) {

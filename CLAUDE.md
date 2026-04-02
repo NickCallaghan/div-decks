@@ -60,13 +60,22 @@ Tests cover parser, serializer (including round-trip), and store (undo/redo, reo
 - Grid layouts use **swap** on drag; list layouts use **insert before**.
 - Presentation mode runs the original SlideEngine unmodified — no editor overrides.
 
+## Bridge Handle Patterns
+
+Key design decisions in the bridge that must be preserved:
+
+- **Handles sit outside elements.** The drag handle is positioned 30px to the left of the element's bounding box. This means the mouse must cross a gap (grid gaps, padding, other elements) to reach the handle. The hover zone check must run **before** target lookup in the mousemove handler — otherwise the target switches to whatever's in the gap and the handle vanishes.
+- **Zone-first hover logic.** If the mouse is within the handle zone of the current target (36px left to 8px right of element edge, 4px above/below), keep the handle visible unconditionally. Don't look up a new target, don't start the hide timer. This is a generic pattern that works for all element types and layouts.
+- **Sibling walk-up for handles.** `findHandleTarget` walks up through matching ancestors — if the innermost reorderable match has no siblings (nothing to reorder with), it tries the parent. This handles cases like a `<p>` that's the only child of a `<div class="reveal">` wrapper.
+- **Selectors should be explicit, not wildcard.** Avoid deep wildcard selectors like `section.slide > * > * > *` in REORDERABLE_SELECTOR — they cause cascading conflicts where internal parts of components (KPI values, card labels) become reorderable, which then breaks their parent's handle. List specific container-child patterns instead.
+
 ## Commands
 
-| Command | Description |
-|---------|-------------|
-| `npm run dev` | Start client + server |
-| `npm run dev:client` | Vite only |
-| `npm run dev:server` | Express only |
-| `npm test` | Run vitest |
-| `npm run build` | Type check + production build |
-| `npm run lint` | ESLint |
+| Command              | Description                   |
+| -------------------- | ----------------------------- |
+| `npm run dev`        | Start client + server         |
+| `npm run dev:client` | Vite only                     |
+| `npm run dev:server` | Express only                  |
+| `npm test`           | Run vitest                    |
+| `npm run build`      | Type check + production build |
+| `npm run lint`       | ESLint                        |
