@@ -10,12 +10,27 @@ export const EDITOR_BRIDGE_SCRIPT = `
   var selectedAt = 0;
   var EDIT_DELAY = 400;
 
-  var TEXT_SELECTOR = 'h1,h2,h3,h4,p,li,span,blockquote,cite,td,th,div.turtle-card__desc,div.turtle-card__name,div.slide__kpi-val,div.slide__kpi-label';
+  var TEXT_SELECTOR = [
+    'h1','h2','h3','h4','h5','h6',
+    'p','li','span','a',
+    'blockquote','cite','figcaption','caption','label',
+    'dt','dd',
+    'td','th',
+    'pre','code',
+    'div.ve-card',
+    'div.slide__kpi-val','div.slide__kpi-label','div.slide__kpi-trend',
+    'div.slide__code-filename','div.slide__body','div.slide__aside'
+  ].join(',');
 
   var REORDERABLE_SELECTOR = [
+    'section.slide > *',
+    'section.slide > * > *',
+    '.slide__panel > *',
     'ul.slide__bullets > li',
     'ol > li',
-    'div.turtle-grid > div.turtle-card',
+    'ul.node-list > li',
+    'dl > dt','dl > dd',
+    '.card-grid > .ve-card',
     'div.slide__kpis > div.slide__kpi',
     'tbody > tr',
     'div.slide__panels > div.slide__panel'
@@ -146,6 +161,8 @@ export const EDITOR_BRIDGE_SCRIPT = `
 
   function isTextElement(el) {
     if (!el || el.closest('svg') || el.closest('script')) return false;
+    // Opaque blocks: selectable/movable but not text-editable
+    if (el.closest('.mermaid-wrap') || el.closest('.slide__decor')) return false;
     return el.closest(TEXT_SELECTOR) !== null;
   }
 
@@ -165,7 +182,15 @@ export const EDITOR_BRIDGE_SCRIPT = `
     handleTarget = el;
     var rect = el.getBoundingClientRect();
     handle.style.display = 'flex';
-    handle.style.top = Math.max(4, rect.top + rect.height / 2 - 14) + 'px';
+    // Vertically: clamp to visible area, anchored to top of element for tall elements
+    var handleH = 28;
+    var centerY = rect.top + rect.height / 2 - handleH / 2;
+    var topY = rect.top + 4;
+    // For elements taller than 100px, anchor near the top instead of centering
+    var y = rect.height > 100 ? topY : centerY;
+    // Clamp to viewport
+    y = Math.max(4, Math.min(y, window.innerHeight - handleH - 4));
+    handle.style.top = y + 'px';
     var idealLeft = rect.left - 30;
     if (idealLeft < 4) idealLeft = rect.left + 4;
     handle.style.left = idealLeft + 'px';
@@ -390,29 +415,30 @@ export const EDITOR_BRIDGE_SCRIPT = `
       return;
     }
 
+    // Check handle zone FIRST — if mouse is near the current handle, keep it
+    // regardless of what element is underneath (handles sit outside the element)
+    if (handleTarget) {
+      var hRect = handleTarget.getBoundingClientRect();
+      var inZone = e.clientX >= hRect.left - 36
+        && e.clientX <= hRect.left + 8
+        && e.clientY >= hRect.top - 4
+        && e.clientY <= hRect.bottom + 4;
+      if (inZone) {
+        if (hideTimeout) { clearTimeout(hideTimeout); hideTimeout = null; }
+        return;
+      }
+    }
+
     var target = findHandleTarget(e.target);
 
     if (target && target !== handleTarget) {
-      // New target — show handle, cancel hide
+      // New target — show handle
       if (hideTimeout) { clearTimeout(hideTimeout); hideTimeout = null; }
       positionHandle(target);
     } else if (target && target === handleTarget) {
       // Same target — cancel hide
       if (hideTimeout) { clearTimeout(hideTimeout); hideTimeout = null; }
     } else if (!target) {
-      // No target — check if mouse is in the handle zone
-      if (handleTarget) {
-        var rect = handleTarget.getBoundingClientRect();
-        // Zone only covers the handle area (left of the element), not the full card
-        var inZone = e.clientX >= rect.left - 36
-          && e.clientX <= rect.left + 8
-          && e.clientY >= rect.top - 4
-          && e.clientY <= rect.bottom + 4;
-        if (inZone) {
-          if (hideTimeout) { clearTimeout(hideTimeout); hideTimeout = null; }
-          return;
-        }
-      }
       // Outside — debounced hide
       if (!hideTimeout) {
         hideTimeout = setTimeout(function() {
@@ -465,9 +491,10 @@ export const EDITOR_BRIDGE_SCRIPT = `
       return;
     }
 
-    // Case 3: New element
+    // Case 3: New element — prefer text element, fall back to reorderable parent
     e.preventDefault();
-    selectElement(clickedEl);
+    var selectTarget = textEl || clickedEl.closest(REORDERABLE_SELECTOR) || clickedEl;
+    selectElement(selectTarget);
   }, true);
 
   // Prevent double-click word selection
@@ -547,11 +574,16 @@ export const EDITOR_OVERRIDE_CSS = `
   .deck-progress, .deck-dots, .deck-counter, .deck-hints { display: none !important; }
   body { overflow: hidden !important; }
 
-  /* Targeted hover highlights — only on editable/reorderable elements */
-  li:hover, div.turtle-card:hover, div.slide__kpi:hover,
-  tr:hover, div.slide__panel:hover,
-  h1:hover, h2:hover, h3:hover, h4:hover, p:hover,
-  blockquote:hover, cite:hover, td:hover, th:hover {
+  /* Targeted hover highlights — on editable/reorderable elements */
+  h1:hover, h2:hover, h3:hover, h4:hover, h5:hover, h6:hover,
+  p:hover, li:hover, a:hover,
+  blockquote:hover, cite:hover, figcaption:hover, caption:hover,
+  dt:hover, dd:hover, td:hover, th:hover,
+  pre:hover, code:hover,
+  div.ve-card:hover, div.slide__kpi:hover,
+  div.slide__panel:hover, tr:hover,
+  div.slide__kpi-val:hover, div.slide__kpi-label:hover,
+  div.slide__code-filename:hover, div.slide__body:hover {
     outline: 1px dashed rgba(59, 130, 246, 0.25);
     outline-offset: 1px;
   }
