@@ -268,6 +268,25 @@ describe("bridge selectors", () => {
       expect(target!.classList.contains("slide__kpi")).toBe(true);
     });
 
+    it("walks up from h2 inside content slide .slide__inner > div wrapper", () => {
+      const root = html(`<section class="slide slide--content">
+        <div class="slide__inner">
+          <div>
+            <p class="slide__label">Label</p>
+            <h2 class="slide__heading">Heading</h2>
+            <ul class="slide__bullets"><li>A</li><li>B</li></ul>
+          </div>
+          <div class="slide__aside">Aside</div>
+        </div>
+      </section>`);
+      const h2 = root.querySelector("h2")!;
+      const target = findHandleTarget(h2);
+      // h2 is 3 levels deep (section > .slide__inner > div > h2)
+      // It should walk up to the plain div (which has a sibling: .slide__aside)
+      expect(target).not.toBeNull();
+      expect(target!.tagName).toBe("DIV");
+    });
+
     it("skips deck and slide elements", () => {
       const root = html(
         '<div class="deck"><section class="slide"><p>Text</p></section></div>',
