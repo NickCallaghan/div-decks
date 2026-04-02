@@ -86,18 +86,20 @@ div.slide__code-filename, div.slide__body, div.slide__aside
 
 ### Reorderable elements (REORDERABLE_SELECTOR)
 
-Elements that get drag handles. Must have at least one sibling.
+Elements that get drag handles. Must have at least one sibling (if no siblings, the walk-up tries ancestors).
+
+Approach: semantic elements are reorderable by default, plus specific atomic units and a direct-child catch-all for wrapper divs.
 
 ```
-section.slide > *                    — all direct slide children (headings, divs, etc.)
-ul.slide__bullets > li               — bullet points
-ol > li                              — numbered list items
-ul.node-list > li                    — custom list items
-dl > dt, dl > dd                     — definition list terms/descriptions
-div.ve-card                          — visual-explainer card components
-div.slide__kpis > div.slide__kpi     — KPI stat cards
+h1, h2, h3, h4, h5, h6              — headings
+p, ul, ol, li                        — paragraphs and lists
+blockquote, cite, pre                — block content
+dl, dt, dd                           — definition lists
+section.slide > *                    — direct slide children (catches wrapper divs)
+div.ve-card                          — card components (dragged as a unit)
+div.slide__kpi                       — KPI cards (dragged as a unit)
+div.slide__panel                     — split slide panels
 tbody > tr                           — table rows
-div.slide__panels > div.slide__panel — split slide panels
 ```
 
 ## Drag Behavior

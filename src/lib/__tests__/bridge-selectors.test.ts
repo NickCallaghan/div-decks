@@ -42,18 +42,27 @@ const TEXT_SELECTOR = [
 ].join(",");
 
 const REORDERABLE_SELECTOR = [
+  "h1",
+  "h2",
+  "h3",
+  "h4",
+  "h5",
+  "h6",
+  "p",
+  "ul",
+  "ol",
+  "li",
+  "blockquote",
+  "cite",
+  "pre",
+  "dl",
+  "dt",
+  "dd",
   "section.slide > *",
-  "section.slide > * > *",
-  ".slide__panel > *",
-  "ul.slide__bullets > li",
-  "ol > li",
-  "ul.node-list > li",
-  "dl > dt",
-  "dl > dd",
-  ".card-grid > .ve-card",
-  "div.slide__kpis > div.slide__kpi",
+  "div.ve-card",
+  "div.slide__kpi",
+  "div.slide__panel",
   "tbody > tr",
-  "div.slide__panels > div.slide__panel",
 ].join(",");
 
 function isTextElement(el: Element): boolean {
@@ -268,7 +277,7 @@ describe("bridge selectors", () => {
       expect(target!.classList.contains("slide__kpi")).toBe(true);
     });
 
-    it("walks up from h2 inside content slide .slide__inner > div wrapper", () => {
+    it("h2 inside content slide matches directly as semantic element", () => {
       const root = html(`<section class="slide slide--content">
         <div class="slide__inner">
           <div>
@@ -281,10 +290,9 @@ describe("bridge selectors", () => {
       </section>`);
       const h2 = root.querySelector("h2")!;
       const target = findHandleTarget(h2);
-      // h2 is 3 levels deep (section > .slide__inner > div > h2)
-      // It should walk up to the plain div (which has a sibling: .slide__aside)
+      // h2 matches directly as a semantic element, has siblings (p, ul)
       expect(target).not.toBeNull();
-      expect(target!.tagName).toBe("DIV");
+      expect(target!.tagName).toBe("H2");
     });
 
     it("skips deck and slide elements", () => {

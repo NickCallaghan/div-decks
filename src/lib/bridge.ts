@@ -23,17 +23,18 @@ export const EDITOR_BRIDGE_SCRIPT = `
   ].join(',');
 
   var REORDERABLE_SELECTOR = [
+    // Semantic text elements — reorderable anywhere they have siblings
+    'h1','h2','h3','h4','h5','h6',
+    'p','ul','ol','li',
+    'blockquote','cite','pre',
+    'dl','dt','dd',
+    // Direct slide children — catches wrapper divs for walk-up
     'section.slide > *',
-    'section.slide > * > *',
-    '.slide__panel > *',
-    'ul.slide__bullets > li',
-    'ol > li',
-    'ul.node-list > li',
-    'dl > dt','dl > dd',
-    '.card-grid > .ve-card',
-    'div.slide__kpis > div.slide__kpi',
-    'tbody > tr',
-    'div.slide__panels > div.slide__panel'
+    // Atomic units — dragged as a whole
+    'div.ve-card',
+    'div.slide__kpi',
+    'div.slide__panel',
+    'tbody > tr'
   ].join(',');
 
   // ===== Create UI elements =====
