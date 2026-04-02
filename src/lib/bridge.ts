@@ -168,16 +168,40 @@ export const EDITOR_BRIDGE_SCRIPT = `
   }
 
   // Atomic containers — always dragged as a unit, children don't get
-  // independent handles. Keep this generic (class prefix matching).
-  var ATOMIC_SELECTOR = 'div.ve-card, div.slide__kpi, div.slide__panel';
+  // independent handles. Detect by: explicit classes OR any div child
+  // of a CSS grid parent (cards in grids should drag as a unit).
+  var ATOMIC_CLASS_SELECTOR = 'div.ve-card, div.slide__kpi, div.slide__panel';
+
+  function isAtomicContainer(el) {
+    if (!el) return null;
+    // Check explicit atomic classes first
+    var match = el.closest(ATOMIC_CLASS_SELECTOR);
+    if (match) return match;
+    // Check if inside a grid child (card in a grid layout)
+    var cur = el;
+    while (cur && cur.tagName !== 'SECTION') {
+      var parent = cur.parentElement;
+      if (parent && cur.tagName === 'DIV') {
+        var style = window.getComputedStyle(parent);
+        if ((style.display === 'grid' || style.display === 'inline-grid')
+            && !parent.classList.contains('deck')
+            && !parent.classList.contains('slide')) {
+          return cur;
+        }
+      }
+      cur = parent;
+    }
+    return null;
+  }
 
   // ===== Handle: find target, position, show/hide =====
   function findHandleTarget(el) {
     if (!el || el.tagName === 'HTML' || el.tagName === 'BODY') return null;
     if (el.classList && (el.classList.contains('deck') || el.classList.contains('slide'))) return null;
     if (el.closest('.se-handle') || el.closest('.se-menu')) return null;
-    // If inside an atomic container, the container is always the target
-    var atomic = el.closest(ATOMIC_SELECTOR);
+    // If inside an atomic container (explicit class or grid child),
+    // the container is always the drag target
+    var atomic = isAtomicContainer(el);
     if (atomic) {
       if (atomic.previousElementSibling || atomic.nextElementSibling) return atomic;
       return null;
