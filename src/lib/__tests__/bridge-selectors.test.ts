@@ -65,7 +65,25 @@ const REORDERABLE_SELECTOR = [
   "tbody > tr",
 ].join(",");
 
-const ATOMIC_SELECTOR = "div.ve-card, div.slide__kpi, div.slide__panel";
+function isAtomicContainer(el: Element | null): Element | null {
+  let cur = el;
+  while (cur && cur.tagName !== "SECTION") {
+    if (cur.classList) {
+      for (let i = 0; i < cur.classList.length; i++) {
+        const cls = cur.classList[i];
+        if (
+          /card$/.test(cls) ||
+          cls === "slide__kpi" ||
+          cls === "slide__panel"
+        ) {
+          return cur;
+        }
+      }
+    }
+    cur = cur.parentElement;
+  }
+  return null;
+}
 
 function isTextElement(el: Element): boolean {
   if (!el || el.closest("svg") || el.closest("script")) return false;
@@ -78,7 +96,7 @@ function findHandleTarget(el: Element | null): Element | null {
   if (el.classList?.contains("deck") || el.classList?.contains("slide"))
     return null;
   // Atomic containers absorb their children
-  const atomic = el.closest(ATOMIC_SELECTOR);
+  const atomic = isAtomicContainer(el);
   if (atomic) {
     if (atomic.previousElementSibling || atomic.nextElementSibling)
       return atomic;
@@ -300,6 +318,45 @@ describe("bridge selectors", () => {
       const h2 = root.querySelector("h2")!;
       const target = findHandleTarget(h2);
       // h2 matches directly as a semantic element, has siblings (p, ul)
+      expect(target).not.toBeNull();
+      expect(target!.tagName).toBe("H2");
+    });
+
+    it("hovering text inside a turtle-card returns the card", () => {
+      const root = html(`<section class="slide">
+        <div class="turtle-grid">
+          <div class="turtle-card"><div class="turtle-card__name">Leonardo</div><div class="turtle-card__desc">Leader</div></div>
+          <div class="turtle-card"><div class="turtle-card__name">Raphael</div><div class="turtle-card__desc">Hothead</div></div>
+        </div>
+      </section>`);
+      const name = root.querySelector(".turtle-card__name")!;
+      const target = findHandleTarget(name);
+      expect(target).not.toBeNull();
+      expect(target!.classList.contains("turtle-card")).toBe(true);
+    });
+
+    it("any *-card class is atomic (generic pattern)", () => {
+      const root = html(`<section class="slide">
+        <div class="my-grid">
+          <div class="custom-card"><h4>Title</h4></div>
+          <div class="custom-card"><h4>Other</h4></div>
+        </div>
+      </section>`);
+      const h4 = root.querySelector("h4")!;
+      const target = findHandleTarget(h4);
+      expect(target!.classList.contains("custom-card")).toBe(true);
+    });
+
+    it("elements inside slide__inner are NOT atomic (layout grid)", () => {
+      const root = html(`<section class="slide">
+        <div class="slide__inner" style="display:grid;">
+          <div><p>Left column</p><h2>Heading</h2></div>
+          <div class="slide__aside"><p>Right column</p></div>
+        </div>
+      </section>`);
+      const h2 = root.querySelector("h2")!;
+      const target = findHandleTarget(h2);
+      // h2 should get its own handle, not be absorbed by the layout div
       expect(target).not.toBeNull();
       expect(target!.tagName).toBe("H2");
     });

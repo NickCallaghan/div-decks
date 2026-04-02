@@ -168,28 +168,22 @@ export const EDITOR_BRIDGE_SCRIPT = `
   }
 
   // Atomic containers — always dragged as a unit, children don't get
-  // independent handles. Detect by: explicit classes OR any div child
-  // of a CSS grid parent (cards in grids should drag as a unit).
-  var ATOMIC_CLASS_SELECTOR = 'div.ve-card, div.slide__kpi, div.slide__panel';
-
+  // independent handles. Matched by class name pattern: any element
+  // with a class ending in "card" (ve-card, turtle-card, etc.) or
+  // specific component classes. This is generic enough to work across
+  // any presentation without listing every card class name.
   function isAtomicContainer(el) {
-    if (!el) return null;
-    // Check explicit atomic classes first
-    var match = el.closest(ATOMIC_CLASS_SELECTOR);
-    if (match) return match;
-    // Check if inside a grid child (card in a grid layout)
     var cur = el;
     while (cur && cur.tagName !== 'SECTION') {
-      var parent = cur.parentElement;
-      if (parent && cur.tagName === 'DIV') {
-        var style = window.getComputedStyle(parent);
-        if ((style.display === 'grid' || style.display === 'inline-grid')
-            && !parent.classList.contains('deck')
-            && !parent.classList.contains('slide')) {
-          return cur;
+      if (cur.classList) {
+        for (var i = 0; i < cur.classList.length; i++) {
+          var cls = cur.classList[i];
+          if (/card$/.test(cls) || cls === 'slide__kpi' || cls === 'slide__panel') {
+            return cur;
+          }
         }
       }
-      cur = parent;
+      cur = cur.parentElement;
     }
     return null;
   }
