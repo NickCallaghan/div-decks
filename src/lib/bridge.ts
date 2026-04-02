@@ -178,7 +178,8 @@ export const EDITOR_BRIDGE_SCRIPT = `
       if (cur.classList) {
         for (var i = 0; i < cur.classList.length; i++) {
           var cls = cur.classList[i];
-          if (/card$/.test(cls) || cls === 'slide__kpi' || cls === 'slide__panel') {
+          if (/card$/.test(cls) || cls === 'slide__kpi' || cls === 'slide__panel'
+            || cls === 'status' || cls === 'tag') {
             return cur;
           }
         }
@@ -385,7 +386,7 @@ export const EDITOR_BRIDGE_SCRIPT = `
     dropIndicator.style.display = 'none';
     var target = document.elementFromPoint(e.clientX, e.clientY);
     if (!target) return;
-    var siblingTarget = target.closest(REORDERABLE_SELECTOR);
+    var siblingTarget = isAtomicContainer(target) || target.closest(REORDERABLE_SELECTOR);
     if (!siblingTarget || siblingTarget === dragEl || siblingTarget.parentElement !== dragEl.parentElement) {
       dropIndicator.style.display = 'none';
       dropTarget = null;

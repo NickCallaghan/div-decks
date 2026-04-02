@@ -74,7 +74,9 @@ function isAtomicContainer(el: Element | null): Element | null {
         if (
           /card$/.test(cls) ||
           cls === "slide__kpi" ||
-          cls === "slide__panel"
+          cls === "slide__panel" ||
+          cls === "status" ||
+          cls === "tag"
         ) {
           return cur;
         }
@@ -345,6 +347,20 @@ describe("bridge selectors", () => {
       const h4 = root.querySelector("h4")!;
       const target = findHandleTarget(h4);
       expect(target!.classList.contains("custom-card")).toBe(true);
+    });
+
+    it("status badges are atomic (selectable and draggable as units)", () => {
+      const root = html(`<section class="slide">
+        <div>
+          <span class="status status--match">Match</span>
+          <span class="status status--gap">Gap</span>
+          <span class="tag">v2.0</span>
+        </div>
+      </section>`);
+      const badge = root.querySelector(".status--match")!;
+      const target = findHandleTarget(badge);
+      expect(target).not.toBeNull();
+      expect(target!.classList.contains("status")).toBe(true);
     });
 
     it("elements inside slide__inner are NOT atomic (layout grid)", () => {
