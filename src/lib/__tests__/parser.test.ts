@@ -1,5 +1,5 @@
-import { describe, it, expect } from 'vitest';
-import { parsePresentation } from '../parser';
+import { describe, it, expect } from "vitest";
+import { parsePresentation } from "../parser";
 
 const MINIMAL_HTML = `<!DOCTYPE html>
 <html lang="en">
@@ -31,67 +31,67 @@ const MINIMAL_HTML = `<!DOCTYPE html>
 </body>
 </html>`;
 
-describe('parsePresentation', () => {
-  it('extracts the title from the <title> tag', () => {
-    const model = parsePresentation('test.html', MINIMAL_HTML);
-    expect(model.title).toBe('Test Deck');
+describe("parsePresentation", () => {
+  it("extracts the title from the <title> tag", () => {
+    const model = parsePresentation("test.html", MINIMAL_HTML);
+    expect(model.title).toBe("Test Deck");
   });
 
-  it('extracts the correct number of slides', () => {
-    const model = parsePresentation('test.html', MINIMAL_HTML);
+  it("extracts the correct number of slides", () => {
+    const model = parsePresentation("test.html", MINIMAL_HTML);
     expect(model.slides).toHaveLength(3);
   });
 
-  it('detects slide types from CSS classes', () => {
-    const model = parsePresentation('test.html', MINIMAL_HTML);
-    expect(model.slides[0].type).toBe('title');
-    expect(model.slides[1].type).toBe('content');
-    expect(model.slides[2].type).toBe('quote');
+  it("detects slide types from CSS classes", () => {
+    const model = parsePresentation("test.html", MINIMAL_HTML);
+    expect(model.slides[0].type).toBe("title");
+    expect(model.slides[1].type).toBe("content");
+    expect(model.slides[2].type).toBe("quote");
   });
 
-  it('assigns unique IDs to each slide', () => {
-    const model = parsePresentation('test.html', MINIMAL_HTML);
+  it("assigns unique IDs to each slide", () => {
+    const model = parsePresentation("test.html", MINIMAL_HTML);
     const ids = model.slides.map((s) => s.id);
     expect(new Set(ids).size).toBe(3);
   });
 
-  it('assigns sequential indexes', () => {
-    const model = parsePresentation('test.html', MINIMAL_HTML);
+  it("assigns sequential indexes", () => {
+    const model = parsePresentation("test.html", MINIMAL_HTML);
     expect(model.slides.map((s) => s.index)).toEqual([0, 1, 2]);
   });
 
-  it('preserves slide outerHtml', () => {
-    const model = parsePresentation('test.html', MINIMAL_HTML);
-    expect(model.slides[0].outerHtml).toContain('Hello World');
-    expect(model.slides[0].outerHtml).toContain('slide--title');
-    expect(model.slides[1].outerHtml).toContain('Bullet one');
+  it("preserves slide outerHtml", () => {
+    const model = parsePresentation("test.html", MINIMAL_HTML);
+    expect(model.slides[0].outerHtml).toContain("Hello World");
+    expect(model.slides[0].outerHtml).toContain("slide--title");
+    expect(model.slides[1].outerHtml).toContain("Bullet one");
   });
 
-  it('preserves the head content', () => {
-    const model = parsePresentation('test.html', MINIMAL_HTML);
-    expect(model.head).toContain('<title>Test Deck</title>');
-    expect(model.head).toContain('.slide { height: 100dvh; }');
+  it("preserves the head content", () => {
+    const model = parsePresentation("test.html", MINIMAL_HTML);
+    expect(model.head).toContain("<title>Test Deck</title>");
+    expect(model.head).toContain(".slide { height: 100dvh; }");
   });
 
-  it('preserves the script block', () => {
-    const model = parsePresentation('test.html', MINIMAL_HTML);
-    expect(model.scriptBlock).toContain('SlideEngine');
+  it("preserves the script block", () => {
+    const model = parsePresentation("test.html", MINIMAL_HTML);
+    expect(model.scriptBlock).toContain("SlideEngine");
   });
 
-  it('stores the filename', () => {
-    const model = parsePresentation('my-deck.html', MINIMAL_HTML);
-    expect(model.filename).toBe('my-deck.html');
+  it("stores the filename", () => {
+    const model = parsePresentation("my-deck.html", MINIMAL_HTML);
+    expect(model.filename).toBe("my-deck.html");
   });
 
-  it('falls back to filename for title if no <title> tag', () => {
-    const noTitle = MINIMAL_HTML.replace('<title>Test Deck</title>', '');
-    const model = parsePresentation('fallback.html', noTitle);
-    expect(model.title).toBe('fallback');
+  it("falls back to filename for title if no <title> tag", () => {
+    const noTitle = MINIMAL_HTML.replace("<title>Test Deck</title>", "");
+    const model = parsePresentation("fallback.html", noTitle);
+    expect(model.title).toBe("fallback");
   });
 
-  it('handles unknown slide types gracefully', () => {
-    const html = MINIMAL_HTML.replace('slide--title', 'slide--custom');
-    const model = parsePresentation('test.html', html);
-    expect(model.slides[0].type).toBe('unknown');
+  it("handles unknown slide types gracefully", () => {
+    const html = MINIMAL_HTML.replace("slide--title", "slide--custom");
+    const model = parsePresentation("test.html", html);
+    expect(model.slides[0].type).toBe("unknown");
   });
 });

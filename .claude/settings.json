@@ -24,11 +24,7 @@
       "Bash(chmod:*)",
       "Bash(open:*)"
     ],
-    "deny": [
-      "Bash(git push:*)",
-      "Bash(git push *)",
-      "Bash(rm -rf:*)"
-    ]
+    "deny": ["Bash(git push:*)", "Bash(git push *)", "Bash(rm -rf:*)"]
   },
   "hooks": {
     "PreToolUse": [

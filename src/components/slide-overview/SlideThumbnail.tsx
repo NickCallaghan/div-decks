@@ -1,5 +1,5 @@
-import type { SlideModel } from '../../types/presentation';
-import { EDITOR_OVERRIDE_CSS } from '../../lib/bridge';
+import type { SlideModel } from "../../types/presentation";
+import { EDITOR_OVERRIDE_CSS } from "../../lib/bridge";
 
 interface SlideThumbnailProps {
   slide: SlideModel;
@@ -9,7 +9,13 @@ interface SlideThumbnailProps {
   onClick: () => void;
 }
 
-export function SlideThumbnail({ slide, head, isActive, slideNumber, onClick }: SlideThumbnailProps) {
+export function SlideThumbnail({
+  slide,
+  head,
+  isActive,
+  slideNumber,
+  onClick,
+}: SlideThumbnailProps) {
   const srcdoc = `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -30,7 +36,7 @@ ${EDITOR_OVERRIDE_CSS}
 
   return (
     <div
-      className={`slide-thumbnail ${isActive ? 'slide-thumbnail--active' : ''}`}
+      className={`slide-thumbnail ${isActive ? "slide-thumbnail--active" : ""}`}
       onClick={onClick}
     >
       <div className="slide-thumbnail__iframe-container">
@@ -41,7 +47,7 @@ ${EDITOR_OVERRIDE_CSS}
           title={`Slide ${slideNumber}`}
           loading="lazy"
           tabIndex={-1}
-          style={{ '--thumb-scale': 0.22 } as React.CSSProperties}
+          style={{ "--thumb-scale": 0.22 } as React.CSSProperties}
         />
       </div>
       <div className="slide-thumbnail__label">

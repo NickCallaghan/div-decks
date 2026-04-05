@@ -1,7 +1,7 @@
-import { useSortable } from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
-import type { SlideModel } from '../../types/presentation';
-import { EDITOR_OVERRIDE_CSS } from '../../lib/bridge';
+import { useSortable } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+import type { SlideModel } from "../../types/presentation";
+import { EDITOR_OVERRIDE_CSS } from "../../lib/bridge";
 
 interface SortableSlideProps {
   slide: SlideModel;
@@ -11,7 +11,13 @@ interface SortableSlideProps {
   onClick: () => void;
 }
 
-export function SortableSlide({ slide, head, isActive, slideNumber, onClick }: SortableSlideProps) {
+export function SortableSlide({
+  slide,
+  head,
+  isActive,
+  slideNumber,
+  onClick,
+}: SortableSlideProps) {
   const {
     attributes,
     listeners,
@@ -25,7 +31,7 @@ export function SortableSlide({ slide, head, isActive, slideNumber, onClick }: S
     transform: CSS.Transform.toString(transform),
     transition,
     opacity: isDragging ? 0.5 : 1,
-    zIndex: isDragging ? 10 : 'auto',
+    zIndex: isDragging ? 10 : "auto",
   };
 
   const srcdoc = `<!DOCTYPE html>
@@ -42,16 +48,18 @@ ${EDITOR_OVERRIDE_CSS}
     <div
       ref={setNodeRef}
       style={style}
-      className={`slide-thumbnail ${isActive ? 'slide-thumbnail--active' : ''}`}
+      className={`slide-thumbnail ${isActive ? "slide-thumbnail--active" : ""}`}
       onClick={onClick}
     >
       {/* Drag handle area — the entire top bar is draggable */}
-      <div
-        className="slide-thumbnail__drag-bar"
-        {...attributes}
-        {...listeners}
-      >
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" style={{ opacity: 0.4 }}>
+      <div className="slide-thumbnail__drag-bar" {...attributes} {...listeners}>
+        <svg
+          width="12"
+          height="12"
+          viewBox="0 0 24 24"
+          fill="currentColor"
+          style={{ opacity: 0.4 }}
+        >
           <circle cx="8" cy="6" r="2" />
           <circle cx="16" cy="6" r="2" />
           <circle cx="8" cy="12" r="2" />
@@ -70,7 +78,7 @@ ${EDITOR_OVERRIDE_CSS}
           title={`Slide ${slideNumber}`}
           loading="lazy"
           tabIndex={-1}
-          style={{ '--thumb-scale': 0.22 } as React.CSSProperties}
+          style={{ "--thumb-scale": 0.22 } as React.CSSProperties}
         />
       </div>
     </div>

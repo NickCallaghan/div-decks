@@ -1,7 +1,7 @@
-import { useRef, useEffect, useCallback } from 'react';
-import type { SlideModel } from '../../types/presentation';
-import { useEditorStore } from '../../store/editor-store';
-import { EDITOR_BRIDGE_SCRIPT, EDITOR_OVERRIDE_CSS } from '../../lib/bridge';
+import { useRef, useEffect, useCallback } from "react";
+import type { SlideModel } from "../../types/presentation";
+import { useEditorStore } from "../../store/editor-store";
+import { EDITOR_BRIDGE_SCRIPT, EDITOR_OVERRIDE_CSS } from "../../lib/bridge";
 
 interface SlideRendererProps {
   slide: SlideModel;
@@ -9,7 +9,11 @@ interface SlideRendererProps {
   interactive?: boolean;
 }
 
-export function SlideRenderer({ slide, head, interactive = true }: SlideRendererProps) {
+export function SlideRenderer({
+  slide,
+  head,
+  interactive = true,
+}: SlideRendererProps) {
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const updateSlideHtml = useEditorStore((s) => s.updateSlideHtml);
   const setSelectedElement = useEditorStore((s) => s.setSelectedElement);
@@ -23,7 +27,7 @@ export function SlideRenderer({ slide, head, interactive = true }: SlideRenderer
       if (e.source !== iframeRef.current?.contentWindow) return;
       const { data } = e;
       switch (data.type) {
-        case 'element-clicked':
+        case "element-clicked":
           setSelectedElement({
             selector: data.selector,
             tagName: data.tagName,
@@ -32,27 +36,27 @@ export function SlideRenderer({ slide, head, interactive = true }: SlideRenderer
             rect: data.rect,
           });
           break;
-        case 'dom-updated':
+        case "dom-updated":
           updateSlideHtml(slide.id, data.outerHtml);
           break;
-        case 'editing-started':
+        case "editing-started":
           setIsEditing(true);
           break;
-        case 'editing-finished':
+        case "editing-finished":
           setIsEditing(false);
           break;
-        case 'element-deselected':
+        case "element-deselected":
           setSelectedElement(null);
           break;
       }
     },
-    [slide.id, updateSlideHtml, setSelectedElement, setIsEditing]
+    [slide.id, updateSlideHtml, setSelectedElement, setIsEditing],
   );
 
   useEffect(() => {
     if (!interactive) return;
-    window.addEventListener('message', handleMessage);
-    return () => window.removeEventListener('message', handleMessage);
+    window.addEventListener("message", handleMessage);
+    return () => window.removeEventListener("message", handleMessage);
   }, [handleMessage, interactive]);
 
   return (
@@ -66,7 +70,11 @@ export function SlideRenderer({ slide, head, interactive = true }: SlideRenderer
   );
 }
 
-function buildSlideSrcdoc(slide: SlideModel, head: string, interactive: boolean): string {
+function buildSlideSrcdoc(
+  slide: SlideModel,
+  head: string,
+  interactive: boolean,
+): string {
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -77,7 +85,7 @@ ${EDITOR_OVERRIDE_CSS}
 <div class="deck">
   ${slide.outerHtml}
 </div>
-${interactive ? EDITOR_BRIDGE_SCRIPT : ''}
+${interactive ? EDITOR_BRIDGE_SCRIPT : ""}
 </body>
 </html>`;
 }

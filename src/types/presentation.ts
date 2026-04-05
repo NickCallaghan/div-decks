@@ -1,15 +1,15 @@
 export type SlideType =
-  | 'title'
-  | 'divider'
-  | 'content'
-  | 'split'
-  | 'diagram'
-  | 'dashboard'
-  | 'table'
-  | 'code'
-  | 'quote'
-  | 'bleed'
-  | 'unknown';
+  | "title"
+  | "divider"
+  | "content"
+  | "split"
+  | "diagram"
+  | "dashboard"
+  | "table"
+  | "code"
+  | "quote"
+  | "bleed"
+  | "unknown";
 
 export interface SlideModel {
   id: string;

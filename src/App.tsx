@@ -14,6 +14,7 @@ export default function App() {
   const setActiveTab = useEditorStore((s) => s.setActiveTab);
   const [showShortcuts, setShowShortcuts] = useState(false);
   const [isPresenting, setIsPresenting] = useState(false);
+  const exitPresentation = useCallback(() => setIsPresenting(false), []);
   const presentation = useEditorStore((s) => s.presentation);
   const { open } = usePresentation();
 
@@ -107,7 +108,7 @@ export default function App() {
       {isPresenting && (
         <PresentationMode
           startSlide={useEditorStore.getState().activeSlideIndex}
-          onExit={() => setIsPresenting(false)}
+          onExit={exitPresentation}
         />
       )}
     </div>

@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useRef } from "react";
 import { useEditorStore } from "../../store/editor-store";
 import { serializePresentation } from "../../lib/serializer";
 
@@ -13,6 +13,10 @@ export function PresentationMode({
 }: PresentationModeProps) {
   const presentation = useEditorStore((s) => s.presentation);
   const [showHint, setShowHint] = useState(true);
+  const onExitRef = useRef(onExit);
+  onExitRef.current = onExit;
+  const containerRef = useRef<HTMLDivElement>(null);
+  const iframeRef = useRef<HTMLIFrameElement>(null);
 
   // Build srcdoc ONCE on mount — never re-render the iframe
   const srcdoc = useMemo(() => {
@@ -53,13 +57,14 @@ document.addEventListener('keydown', function(e) {
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
       if (e.key === "Escape") {
-        onExit();
+        e.stopPropagation();
+        onExitRef.current();
         return;
       }
       e.stopPropagation();
     }
     function handleMessage(e: MessageEvent) {
-      if (e.data?.type === "exit-presentation") onExit();
+      if (e.data?.type === "exit-presentation") onExitRef.current();
     }
     window.addEventListener("keydown", handleKeyDown, true);
     window.addEventListener("message", handleMessage);
@@ -67,7 +72,45 @@ document.addEventListener('keydown', function(e) {
       window.removeEventListener("keydown", handleKeyDown, true);
       window.removeEventListener("message", handleMessage);
     };
-  }, [onExit]);
+  }, []);
+
+  // Auto-focus container so Escape works before user clicks the iframe
+  useEffect(() => {
+    containerRef.current?.focus();
+  }, []);
+
+  // Attach a keydown listener directly on the iframe's contentDocument.
+  // This is the most reliable path when the iframe has focus, since keyboard
+  // events inside an iframe don't propagate to the parent window at all.
+  // We try both immediately (srcdoc may already be parsed) and on load.
+  useEffect(() => {
+    const iframe = iframeRef.current;
+    if (!iframe) return;
+
+    function attachEscapeToIframeDoc() {
+      try {
+        const doc = iframe!.contentDocument;
+        if (!doc) return;
+        doc.addEventListener("keydown", (e) => {
+          if (e.key === "Escape") {
+            e.preventDefault();
+            onExitRef.current();
+          }
+        });
+      } catch {
+        // contentDocument not accessible — fall back to postMessage path
+      }
+    }
+
+    // Try immediately in case srcdoc is already loaded
+    attachEscapeToIframeDoc();
+    // Also try on native load event (fires after srcdoc finishes parsing)
+    iframe.addEventListener("load", attachEscapeToIframeDoc);
+
+    return () => {
+      iframe.removeEventListener("load", attachEscapeToIframeDoc);
+    };
+  }, []);
 
   // Fade hint after 3 seconds
   useEffect(() => {
@@ -79,14 +122,22 @@ document.addEventListener('keydown', function(e) {
 
   return (
     <div
+      ref={containerRef}
+      data-testid="presentation-mode"
+      tabIndex={-1}
+      onKeyDown={(e) => {
+        if (e.key === "Escape") onExitRef.current();
+      }}
       style={{
         position: "fixed",
         inset: 0,
         zIndex: 9999,
         background: "#000",
+        outline: "none",
       }}
     >
       <iframe
+        ref={iframeRef}
         srcDoc={srcdoc}
         style={{
           width: "100%",
@@ -96,6 +147,39 @@ document.addEventListener('keydown', function(e) {
         sandbox="allow-scripts allow-same-origin"
         title="Presentation"
       />
+      <button
+        type="button"
+        onClick={() => onExitRef.current()}
+        style={{
+          position: "fixed",
+          top: 16,
+          right: 16,
+          zIndex: 10000,
+          width: 36,
+          height: 36,
+          borderRadius: "50%",
+          border: "1px solid rgba(255,255,255,0.2)",
+          background: "rgba(0,0,0,0.6)",
+          color: "rgba(255,255,255,0.8)",
+          fontSize: 18,
+          cursor: "pointer",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          backdropFilter: "blur(4px)",
+          opacity: showHint ? 1 : 0.3,
+          transition: "opacity 0.3s ease",
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.opacity = "1";
+        }}
+        onMouseLeave={(e) => {
+          if (!showHint) e.currentTarget.style.opacity = "0.3";
+        }}
+        title="Exit presentation (Esc)"
+      >
+        ✕
+      </button>
       <div
         style={{
           position: "fixed",

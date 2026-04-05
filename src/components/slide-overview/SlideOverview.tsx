@@ -5,10 +5,13 @@ import {
   useSensor,
   useSensors,
   type DragEndEvent,
-} from '@dnd-kit/core';
-import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
-import { useEditorStore } from '../../store/editor-store';
-import { SortableSlide } from './SortableSlide';
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { useEditorStore } from "../../store/editor-store";
+import { SortableSlide } from "./SortableSlide";
 
 export function SlideOverview() {
   const presentation = useEditorStore((s) => s.presentation);
@@ -17,14 +20,16 @@ export function SlideOverview() {
   const reorderSlides = useEditorStore((s) => s.reorderSlides);
 
   const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 8 } })
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
   );
 
   if (!presentation) {
     return (
-      <div className="empty-state" style={{ padding: '32px 16px' }}>
+      <div className="empty-state" style={{ padding: "32px 16px" }}>
         <div className="empty-state__title">No slides</div>
-        <div className="empty-state__desc">Open a presentation to see its slides</div>
+        <div className="empty-state__desc">
+          Open a presentation to see its slides
+        </div>
       </div>
     );
   }
@@ -42,9 +47,13 @@ export function SlideOverview() {
   }
 
   return (
-    <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+    <DndContext
+      sensors={sensors}
+      collisionDetection={closestCenter}
+      onDragEnd={handleDragEnd}
+    >
       <SortableContext items={slideIds} strategy={verticalListSortingStrategy}>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
           {presentation.slides.map((slide, i) => (
             <SortableSlide
               key={slide.id}

@@ -1,6 +1,6 @@
-import { useEffect } from 'react';
-import { fetchPresentationList } from '../api/presentations';
-import { useEditorStore } from '../store/editor-store';
+import { useEffect } from "react";
+import { fetchPresentationList } from "../api/presentations";
+import { useEditorStore } from "../store/editor-store";
 
 export function usePresentationList() {
   const files = useEditorStore((s) => s.files);
@@ -9,7 +9,7 @@ export function usePresentationList() {
   useEffect(() => {
     fetchPresentationList()
       .then(setFiles)
-      .catch((err) => console.error('Failed to load presentations:', err));
+      .catch((err) => console.error("Failed to load presentations:", err));
   }, [setFiles]);
 
   const refresh = () => {
