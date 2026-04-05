@@ -1,7 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { serializePresentation } from "../serializer";
 import { parsePresentation } from "../parser";
-import type { PresentationModel } from "../../types/presentation";
 
 const MINIMAL_HTML = `<!DOCTYPE html>
 <html lang="en">

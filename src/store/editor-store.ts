@@ -94,7 +94,9 @@ export const useEditorStore = create<EditorState>((set) => ({
   setActiveTab: (activeTab) => {
     try {
       sessionStorage.setItem("activeTab", activeTab);
-    } catch {}
+    } catch {
+      // sessionStorage unavailable in sandboxed iframes
+    }
     set({ activeTab });
   },
 
@@ -109,7 +111,9 @@ export const useEditorStore = create<EditorState>((set) => ({
       } else {
         sessionStorage.removeItem("activeFile");
       }
-    } catch {}
+    } catch {
+      // sessionStorage unavailable in sandboxed iframes
+    }
     set({
       presentation,
       activeSlideIndex: 0,
