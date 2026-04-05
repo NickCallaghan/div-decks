@@ -20,45 +20,11 @@ test.describe("Presentation mode", () => {
     return overlay;
   }
 
-  test("pressing Escape exits presentation mode", async ({ page }) => {
-    const overlay = await openPresentationAndPlay(page);
-
-    // Press Escape
-    await page.keyboard.press("Escape");
-
-    // Presentation overlay should be gone
-    await expect(overlay).not.toBeVisible({ timeout: 3000 });
-
-    // Editor should be visible again
-    await expect(page.locator(".editor-canvas__iframe")).toBeVisible();
-  });
-
-  test("pressing Escape exits after clicking inside iframe", async ({
-    page,
-  }) => {
-    const overlay = await openPresentationAndPlay(page);
-
-    // Click inside the presentation iframe to give it focus
-    const iframe = overlay.locator("iframe");
-    await iframe.click({ position: { x: 100, y: 100 } });
-
-    // Small delay to ensure focus has moved to iframe
-    await page.waitForTimeout(200);
-
-    // Press Escape — this exercises the postMessage path
-    await page.keyboard.press("Escape");
-
-    // Presentation overlay should be gone
-    await expect(overlay).not.toBeVisible({ timeout: 3000 });
-  });
-
   test("close button exits presentation mode", async ({ page }) => {
     const overlay = await openPresentationAndPlay(page);
 
     // Click the close button
-    const closeButton = overlay.locator(
-      'button[title="Exit presentation (Esc)"]',
-    );
+    const closeButton = overlay.locator('button[title="Exit presentation"]');
     await expect(closeButton).toBeVisible();
     await closeButton.click();
 
@@ -78,9 +44,7 @@ test.describe("Presentation mode", () => {
     await page.waitForTimeout(200);
 
     // Click the close button
-    const closeButton = overlay.locator(
-      'button[title="Exit presentation (Esc)"]',
-    );
+    const closeButton = overlay.locator('button[title="Exit presentation"]');
     await closeButton.click();
 
     // Presentation overlay should be gone
@@ -88,9 +52,10 @@ test.describe("Presentation mode", () => {
   });
 
   test("can re-enter presentation mode after exiting", async ({ page }) => {
-    // First enter and exit
+    // First enter and exit via close button
     const overlay = await openPresentationAndPlay(page);
-    await page.keyboard.press("Escape");
+    const closeButton = overlay.locator('button[title="Exit presentation"]');
+    await closeButton.click();
     await expect(overlay).not.toBeVisible({ timeout: 3000 });
 
     // Re-enter
@@ -100,7 +65,8 @@ test.describe("Presentation mode", () => {
     await expect(overlay2).toBeVisible({ timeout: 5000 });
 
     // Exit again
-    await page.keyboard.press("Escape");
+    const closeButton2 = overlay2.locator('button[title="Exit presentation"]');
+    await closeButton2.click();
     await expect(overlay2).not.toBeVisible({ timeout: 3000 });
   });
 });
