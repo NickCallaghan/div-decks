@@ -38,6 +38,9 @@ test.describe("Smoke tests", () => {
     await page.locator(".file-item").first().click();
     await expect(page.locator(".editor-canvas__iframe")).toBeVisible();
 
+    // Switch to the Slides tab
+    await page.getByText("Slides", { exact: false }).click();
+
     // Wait for thumbnails to render
     const thumbnails = page.locator(".slide-thumbnail");
     await expect(thumbnails.first()).toBeVisible();
