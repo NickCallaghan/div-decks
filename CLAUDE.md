@@ -41,17 +41,32 @@ specs/            — Architecture and interaction model docs
 ## Testing
 
 ```bash
-npm test         # Run tests once
-npm run test:watch  # Watch mode
+npm test           # Run unit tests once
+npm run test:watch # Unit test watch mode
+npm run test:e2e   # Run E2E tests (starts dev server automatically)
 ```
 
-Tests cover parser, serializer (including round-trip), and store (undo/redo, reorder, selection).
+Unit tests cover parser, serializer (including round-trip), and store (undo/redo, reorder, selection).
+E2E tests cover app loading, file browsing, presentation opening, and slide navigation.
 
 ## Development Rules
 
 - **Write tests for new functionality.** Every new feature or bug fix should include tests. Parser/serializer changes need round-trip tests. Store changes need state transition tests. If a bug is fixed, add a regression test that would have caught it.
 - **Update specs when adding features.** When the architecture, interaction model, or API changes, update the corresponding file in `specs/`. `specs/architecture.md` covers data model, data flow, API, and project structure. `specs/interaction-model.md` covers the bridge state machine, element selectors, drag behavior, and keyboard shortcuts. Design docs and feature specs also go in `specs/` — do not create a separate `docs/` directory.
 - **Run tests before committing.** `npm test` must pass. Don't commit with failing tests.
+
+## Verification Workflow
+
+After any UI-affecting change, Claude must verify the change works before claiming completion:
+
+1. **Ensure the dev server is running** (`npm run dev`). Start it if it's not.
+2. **Open the app in the browser** using Playwright MCP tools — `browser_navigate` to `http://localhost:5173`.
+3. **Visually verify the change** — use `browser_snapshot` to inspect the DOM/accessibility tree, `browser_take_screenshot` for visual checks, and `browser_click`/`browser_fill_form` to test interactions.
+4. **Iterate until it works** — if something looks wrong or broken, fix the code and re-verify. Do not move on until the change is confirmed working.
+5. **Write or update E2E tests** — add tests in `e2e/` that cover the change. The E2E suite should grow with each feature.
+6. **Run all tests** — both `npm test` (unit) and `npm run test:e2e` (E2E) must pass before claiming done.
+
+Do not skip browser verification. Do not claim UI work is complete based only on unit tests passing.
 
 ## Conventions
 
@@ -71,11 +86,13 @@ Key design decisions in the bridge that must be preserved:
 
 ## Commands
 
-| Command              | Description                   |
-| -------------------- | ----------------------------- |
-| `npm run dev`        | Start client + server         |
-| `npm run dev:client` | Vite only                     |
-| `npm run dev:server` | Express only                  |
-| `npm test`           | Run vitest                    |
-| `npm run build`      | Type check + production build |
-| `npm run lint`       | ESLint                        |
+| Command               | Description                    |
+| --------------------- | ------------------------------ |
+| `npm run dev`         | Start client + server          |
+| `npm run dev:client`  | Vite only                      |
+| `npm run dev:server`  | Express only                   |
+| `npm test`            | Run vitest                     |
+| `npm run build`       | Type check + production build  |
+| `npm run test:e2e`    | Playwright E2E tests           |
+| `npm run test:e2e:ui` | Playwright E2E tests (UI mode) |
+| `npm run lint`        | ESLint                         |
