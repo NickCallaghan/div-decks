@@ -16,6 +16,12 @@ dist-ssr
 # Playwright MCP
 .playwright-mcp/
 
+# Playwright artifacts
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+
 # Presentation backups
 presentations/*.bak-*.html
 
