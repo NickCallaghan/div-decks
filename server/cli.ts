@@ -180,11 +180,9 @@ async function main(): Promise<void> {
   setTimeout(() => openBrowser(`http://localhost:${port}`), 500);
 }
 
-// Only run when executed directly, not when imported for testing
-const isDirectRun =
-  import.meta.url === `file://${process.argv[1]}` ||
-  process.argv[1]?.endsWith("/cli.js");
-if (isDirectRun) {
+// Skip when imported by vitest for testing
+const isTest = typeof process !== "undefined" && !!process.env["VITEST"];
+if (!isTest) {
   main().catch((err) => {
     console.error(err);
     process.exit(1);
