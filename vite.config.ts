@@ -1,5 +1,4 @@
-import { defineConfig, type Plugin } from "vite";
-import { configDefaults } from "vitest/config";
+import { defineConfig, configDefaults } from "vitest/config";
 import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 import path from "node:path";
@@ -12,12 +11,13 @@ import fs from "node:fs";
  *
  * Vite's watcher is told to ignore presentations/ (see server.watch.ignored).
  */
-function presentationHmr(): Plugin {
+function presentationHmr() {
   const presentationsDir = path.resolve(__dirname, "presentations");
   return {
     name: "presentation-hmr",
     apply: "serve",
-    configureServer(server) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    configureServer(server: any) {
       // Don't start the file watcher during test runs
       if (process.env.VITEST) return;
       const watcher = fs.watch(presentationsDir, (_event, filename) => {
@@ -35,7 +35,8 @@ function presentationHmr(): Plugin {
 }
 
 export default defineConfig({
-  plugins: [react(), tailwindcss(), presentationHmr()],
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  plugins: [react(), tailwindcss(), presentationHmr() as any],
   server: {
     watch: {
       ignored: ["**/presentations/**"],
