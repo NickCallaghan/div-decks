@@ -1,6 +1,7 @@
 import express from "express";
 import path from "node:path";
 import { createPresentationsRouter } from "./routes/presentations.js";
+import { createGitRouter } from "./routes/git.js";
 
 export function startServer(presentationsDir: string, port: number): void {
   const app = express();
@@ -17,6 +18,7 @@ export function startServer(presentationsDir: string, port: number): void {
 
   // API routes
   app.use("/api/presentations", createPresentationsRouter(presentationsDir));
+  app.use("/api/git", createGitRouter(presentationsDir));
 
   // SPA fallback — serve index.html for any unmatched route
   app.get("*", (_req, res) => {

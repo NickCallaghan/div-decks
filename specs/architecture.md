@@ -18,7 +18,8 @@ Express server (port 3001)
   ├── GET    /api/presentations           → list .html files
   ├── GET    /api/presentations/:file     → read HTML
   ├── PUT    /api/presentations/:file     → write HTML (atomic)
-  └── DELETE /api/presentations/:file     → delete file
+  ├── DELETE /api/presentations/:file     → delete file
+  └── GET    /api/git/status?filename=X   → branch + file git status
 ```
 
 ### Why iframes?
@@ -113,9 +114,14 @@ type SlideType =
 | GET    | /api/presentations/:filename | -                                | Raw HTML (text/html)                    |
 | PUT    | /api/presentations/:filename | Raw HTML (text/html, 10MB limit) | `{ ok: true }`                          |
 | DELETE | /api/presentations/:filename | -                                | `{ ok: true }`                          |
+| GET    | /api/git/status              | ?filename=X (optional)           | `{ available, branch, fileStatus }`     |
 
 All filenames validated: `/^[a-zA-Z0-9_\-. ]+\.html$/`, no `..` path traversal.
 PUT writes atomically: temp file in os.tmpdir() then fs.rename().
+
+Git status endpoint runs `git` commands via `child_process.execFile` (no shell injection).
+Returns `{ available: false }` gracefully when not in a git repo or git is not installed.
+`fileStatus` values: `"clean"`, `"modified"`, `"staged"`, `"untracked"`, `"added"`, or `null`.
 
 ## Project Structure
 
@@ -123,11 +129,14 @@ PUT writes atomically: temp file in os.tmpdir() then fs.rename().
 div.deck/
 ├── server/
 │   ├── index.ts                    # Express entry (port 3001, CORS)
-│   └── routes/presentations.ts     # File I/O endpoints
+│   ├── lib/git.ts                  # Git command utilities (execFile wrappers)
+│   ├── routes/presentations.ts     # File I/O endpoints
+│   └── routes/git.ts              # Git status endpoint
 ├── src/
 │   ├── main.tsx                    # React entry
 │   ├── App.tsx                     # Root layout + presentation mode
 │   ├── api/presentations.ts        # Fetch wrappers
+│   ├── api/git.ts                  # Git status fetch wrapper
 │   ├── store/editor-store.ts       # Zustand store (selection, undo/redo, dirty state)
 │   ├── lib/
 │   │   ├── parser.ts               # HTML → PresentationModel
@@ -136,7 +145,8 @@ div.deck/
 │   ├── types/presentation.ts       # TypeScript interfaces
 │   ├── hooks/
 │   │   ├── usePresentation.ts      # open/save coordination
-│   │   └── usePresentationList.ts  # file listing
+│   │   ├── usePresentationList.ts  # file listing
+│   │   └── useGitStatus.ts        # Git branch + file status polling
 │   ├── components/
 │   │   ├── editor/
 │   │   │   ├── EditorCanvas.tsx    # Active slide container
