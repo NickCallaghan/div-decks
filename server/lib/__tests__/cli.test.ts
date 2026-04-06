@@ -62,13 +62,13 @@ describe("new-deck plugin structure", () => {
     expect(content).toContain("name: new-deck");
   });
 
-  it("has commands/new-deck.md slash command", () => {
+  it("skill SKILL.md contains slide deck generation instructions", () => {
     const content = fs.readFileSync(
-      path.join(pluginDir, "commands", "new-deck.md"),
+      path.join(pluginDir, "skills", "new-deck", "SKILL.md"),
       "utf-8",
     );
-    expect(content).toContain("description:");
     expect(content).toContain("slide deck");
+    expect(content).toContain("SlideEngine");
   });
 
   it("has all required reference files", () => {
