@@ -2,7 +2,12 @@ import { describe, it, expect } from "vitest";
 import path from "node:path";
 import os from "node:os";
 import fs from "node:fs/promises";
-import { isGitRepo, getRepoRoot, getCurrentBranch, parseFileStatus } from "../git";
+import {
+  isGitRepo,
+  getRepoRoot,
+  getCurrentBranch,
+  parseFileStatus,
+} from "../git";
 
 const projectRoot = path.resolve(import.meta.dirname, "..", "..", "..");
 

@@ -29,6 +29,9 @@ presentations/*.bak-*.html
 # Worktrees
 .worktrees/
 
+# npm auth
+.npmrc
+
 # Misc
 tmp/
 

@@ -3,6 +3,25 @@
   "version": "0.2.0",
   "type": "module",
   "description": "Browser-based editor for HTML slide decks",
+  "author": "Nick Callaghan",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/NickCallaghan/div-decks.git"
+  },
+  "homepage": "https://github.com/NickCallaghan/div-decks#readme",
+  "bugs": {
+    "url": "https://github.com/NickCallaghan/div-decks/issues"
+  },
+  "license": "MIT",
+  "keywords": [
+    "slide-deck",
+    "presentation",
+    "editor",
+    "html",
+    "visual-editor",
+    "cli",
+    "browser-based"
+  ],
   "bin": {
     "div-deck": "dist-server/cli.js"
   },
