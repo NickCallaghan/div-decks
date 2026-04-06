@@ -19,8 +19,12 @@ export function useGitStatus(): GitStatus | null {
 
   // Fetch on mount and when filename changes
   useEffect(() => {
-    refresh();
-  }, [refresh]);
+    const load = async () => {
+      if (!filename) return null;
+      return fetchGitStatus(filename);
+    };
+    load().then(setStatus);
+  }, [filename]);
 
   // Poll on interval
   useEffect(() => {

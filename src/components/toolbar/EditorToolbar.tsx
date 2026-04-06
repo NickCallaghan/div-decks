@@ -2,6 +2,7 @@ import { useCallback, useEffect } from "react";
 import { useEditorStore } from "../../store/editor-store";
 import { usePresentation } from "../../hooks/usePresentation";
 import { useGitStatus } from "../../hooks/useGitStatus";
+import { exportPdf } from "../../lib/export-pdf";
 
 interface EditorToolbarProps {
   onPlay?: () => void;
@@ -59,6 +60,10 @@ export function EditorToolbar({ onPlay }: EditorToolbarProps) {
     sendCommand({ type: "deselect" });
   }, [sendCommand]);
 
+  const handleExportPdf = useCallback(() => {
+    if (presentation) exportPdf(presentation);
+  }, [presentation]);
+
   // Keyboard shortcuts
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
@@ -78,6 +83,10 @@ export function EditorToolbar({ onPlay }: EditorToolbarProps) {
       if (mod && e.key === "y") {
         e.preventDefault();
         redo();
+      }
+      if (mod && e.key === "p") {
+        e.preventDefault();
+        handleExportPdf();
       }
       // Arrow keys to navigate slides (only when not editing text)
       if (!mod && (e.key === "ArrowLeft" || e.key === "ArrowRight")) {
@@ -111,7 +120,15 @@ export function EditorToolbar({ onPlay }: EditorToolbarProps) {
     }
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [handleSave, handleDelete, handleDeselect, selectedElement, undo, redo]);
+  }, [
+    handleSave,
+    handleDelete,
+    handleDeselect,
+    handleExportPdf,
+    selectedElement,
+    undo,
+    redo,
+  ]);
 
   const totalSlides = presentation?.slides.length ?? 0;
 
@@ -380,6 +397,24 @@ export function EditorToolbar({ onPlay }: EditorToolbarProps) {
               </svg>
             </ToolbarButton>
           )}
+
+          {/* Export PDF */}
+          <ToolbarButton onClick={handleExportPdf} title="Export PDF (Cmd+P)">
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+              <polyline points="7 10 12 15 17 10" />
+              <line x1="12" y1="15" x2="12" y2="3" />
+            </svg>
+          </ToolbarButton>
 
           {/* Save */}
           <button
