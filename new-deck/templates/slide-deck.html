@@ -1,0 +1,770 @@
+<!-- Template reference deck for the new-deck skill. Swiss Clean aesthetic. -->
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Project Overview</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700;800&family=JetBrains+Mono:wght@400;600&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      /* ─── Theme Variables ─────────────────────────────────────────── */
+      :root {
+        --bg: #ffffff;
+        --surface: #f8f9fa;
+        --text: #1a1a2e;
+        --text-dim: #6b7280;
+        --border: #e5e7eb;
+        --accent: #2563eb;
+        --accent-dim: rgba(37, 99, 235, 0.08);
+        --green: #059669;
+        --red: #dc2626;
+        --font-body: "DM Sans", system-ui, sans-serif;
+        --font-heading: "DM Sans", system-ui, sans-serif;
+        --font-mono: "JetBrains Mono", monospace;
+      }
+
+      body {
+        font-family: var(--font-body);
+        background: var(--bg);
+        color: var(--text);
+        -webkit-font-smoothing: antialiased;
+      }
+
+      /* ─── Reset & Deck Container ──────────────────────────────────── */
+      *,
+      *::before,
+      *::after {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      .deck {
+        height: 100dvh;
+        overflow-y: auto;
+        scroll-snap-type: y mandatory;
+        scroll-behavior: smooth;
+        -webkit-overflow-scrolling: touch;
+      }
+
+      .slide {
+        height: 100dvh;
+        scroll-snap-align: start;
+        overflow: hidden;
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        padding: clamp(40px, 6vh, 80px) clamp(40px, 8vw, 120px);
+        isolation: isolate;
+        opacity: 0;
+        transform: translateY(40px) scale(0.98);
+        transition:
+          opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1),
+          transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+      }
+
+      .slide.visible {
+        opacity: 1;
+        transform: none;
+      }
+
+      /* ─── Reveal Animation ────────────────────────────────────────── */
+      .slide .reveal {
+        opacity: 0;
+        transform: translateY(20px);
+        transition:
+          opacity 0.5s cubic-bezier(0.16, 1, 0.3, 1),
+          transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+      }
+
+      .slide.visible .reveal {
+        opacity: 1;
+        transform: none;
+      }
+      .slide.visible .reveal:nth-child(1) {
+        transition-delay: 0.1s;
+      }
+      .slide.visible .reveal:nth-child(2) {
+        transition-delay: 0.2s;
+      }
+      .slide.visible .reveal:nth-child(3) {
+        transition-delay: 0.3s;
+      }
+      .slide.visible .reveal:nth-child(4) {
+        transition-delay: 0.4s;
+      }
+      .slide.visible .reveal:nth-child(5) {
+        transition-delay: 0.5s;
+      }
+      .slide.visible .reveal:nth-child(6) {
+        transition-delay: 0.6s;
+      }
+      .slide.visible .reveal:nth-child(7) {
+        transition-delay: 0.7s;
+      }
+      .slide.visible .reveal:nth-child(8) {
+        transition-delay: 0.8s;
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        .slide,
+        .slide .reveal {
+          opacity: 1 !important;
+          transform: none !important;
+          transition: none !important;
+        }
+      }
+
+      /* ─── Typography ──────────────────────────────────────────────── */
+      .slide__display {
+        font-size: clamp(48px, 10vw, 120px);
+        font-weight: 800;
+        letter-spacing: -3px;
+        line-height: 0.95;
+        text-wrap: balance;
+      }
+
+      .slide__heading {
+        font-size: clamp(28px, 5vw, 48px);
+        font-weight: 700;
+        letter-spacing: -1px;
+        line-height: 1.1;
+        text-wrap: balance;
+        margin-bottom: 0.5em;
+      }
+
+      .slide__body {
+        font-size: clamp(16px, 2.2vw, 24px);
+        line-height: 1.6;
+        text-wrap: pretty;
+        color: var(--text-dim);
+      }
+
+      .slide__label {
+        font-family: var(--font-mono);
+        font-size: clamp(10px, 1.2vw, 14px);
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        color: var(--accent);
+        margin-bottom: 16px;
+      }
+
+      /* ─── Nav Chrome ──────────────────────────────────────────────── */
+      .deck-progress {
+        position: fixed;
+        top: 0;
+        left: 0;
+        height: 3px;
+        background: var(--accent);
+        z-index: 100;
+        transition: width 0.3s ease;
+        pointer-events: none;
+      }
+
+      .deck-dots {
+        position: fixed;
+        right: clamp(12px, 2vw, 24px);
+        top: 50%;
+        transform: translateY(-50%);
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        z-index: 100;
+        padding: 8px;
+        background: color-mix(in srgb, var(--bg) 60%, transparent 40%);
+        border-radius: 20px;
+        backdrop-filter: blur(4px);
+      }
+
+      .deck-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--text-dim);
+        opacity: 0.3;
+        border: none;
+        padding: 0;
+        cursor: pointer;
+        transition:
+          opacity 0.2s ease,
+          transform 0.2s ease;
+      }
+
+      .deck-dot:hover {
+        opacity: 0.6;
+      }
+
+      .deck-dot.active {
+        opacity: 1;
+        transform: scale(1.5);
+        background: var(--accent);
+      }
+
+      .deck-counter {
+        position: fixed;
+        bottom: clamp(12px, 2vh, 24px);
+        right: clamp(12px, 2vw, 24px);
+        font-family: var(--font-mono);
+        font-size: 12px;
+        color: var(--text-dim);
+        z-index: 100;
+        font-variant-numeric: tabular-nums;
+      }
+
+      .deck-hints {
+        position: fixed;
+        bottom: clamp(12px, 2vh, 24px);
+        left: 50%;
+        transform: translateX(-50%);
+        font-family: var(--font-mono);
+        font-size: 11px;
+        color: var(--text-dim);
+        opacity: 0.6;
+        z-index: 100;
+        transition: opacity 0.5s ease;
+        white-space: nowrap;
+      }
+
+      .deck-hints.faded {
+        opacity: 0;
+        pointer-events: none;
+      }
+
+      /* ─── Slide Type: Title ───────────────────────────────────────── */
+      .slide--title {
+        align-items: flex-start;
+        justify-content: center;
+        background: var(--bg);
+      }
+
+      .slide--title::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 40%;
+        height: 100%;
+        background: var(--accent-dim);
+        clip-path: polygon(15% 0, 100% 0, 100% 100%, 0% 100%);
+        z-index: -1;
+      }
+
+      .slide--title .slide__display {
+        color: var(--text);
+        max-width: 14ch;
+      }
+
+      .slide--title .slide__display span {
+        color: var(--accent);
+      }
+
+      .slide--title .slide__body {
+        max-width: 42ch;
+        margin-top: 1.5em;
+      }
+
+      /* ─── Slide Type: Divider ─────────────────────────────────────── */
+      .slide--divider {
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        background: var(--text);
+        color: var(--bg);
+      }
+
+      .slide--divider .slide__label {
+        color: var(--accent);
+      }
+
+      .slide--divider .slide__number {
+        font-family: var(--font-mono);
+        font-size: clamp(80px, 20vw, 200px);
+        font-weight: 800;
+        line-height: 1;
+        letter-spacing: -6px;
+        color: rgba(255, 255, 255, 0.06);
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        z-index: 0;
+        pointer-events: none;
+        user-select: none;
+      }
+
+      .slide--divider .slide__content {
+        position: relative;
+        z-index: 1;
+      }
+
+      .slide--divider .slide__heading {
+        color: var(--bg);
+        margin-bottom: 0.3em;
+      }
+
+      .slide--divider .slide__body {
+        color: rgba(255, 255, 255, 0.5);
+      }
+
+      /* ─── Slide Type: Content ─────────────────────────────────────── */
+      .slide--content {
+        background: var(--bg);
+      }
+
+      .slide--content .slide__inner {
+        display: grid;
+        grid-template-columns: 3fr 2fr;
+        gap: clamp(40px, 6vw, 80px);
+        align-items: center;
+        width: 100%;
+      }
+
+      .slide__bullets {
+        list-style: none;
+        margin-top: 1.5em;
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+      }
+
+      .slide__bullets li {
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        font-size: clamp(14px, 1.8vw, 20px);
+        line-height: 1.5;
+        color: var(--text);
+      }
+
+      .slide__bullets li::before {
+        content: "";
+        flex-shrink: 0;
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: var(--accent);
+        margin-top: 0.55em;
+      }
+
+      .slide__aside {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        aspect-ratio: 4 / 3;
+        overflow: hidden;
+      }
+
+      /* ─── Slide Type: Dashboard ───────────────────────────────────── */
+      .slide--dashboard {
+        background: var(--bg);
+      }
+
+      .slide--dashboard .slide__heading {
+        margin-bottom: 1.5em;
+      }
+
+      .slide__kpis {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: clamp(12px, 2vw, 24px);
+      }
+
+      .slide__kpi {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: clamp(16px, 2.5vw, 28px);
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        transition: box-shadow 0.2s ease;
+      }
+
+      .slide__kpi:hover {
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+      }
+
+      .slide__kpi-label {
+        font-family: var(--font-mono);
+        font-size: clamp(9px, 1vw, 12px);
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 1.5px;
+        color: var(--text-dim);
+      }
+
+      .slide__kpi-val {
+        font-size: clamp(28px, 4vw, 48px);
+        font-weight: 800;
+        letter-spacing: -2px;
+        line-height: 1;
+        color: var(--text);
+      }
+
+      .slide__kpi-trend {
+        font-family: var(--font-mono);
+        font-size: clamp(11px, 1.2vw, 13px);
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+      }
+
+      .slide__kpi-trend--up {
+        color: var(--green);
+      }
+      .slide__kpi-trend--down-good {
+        color: var(--green);
+      }
+      .slide__kpi-trend--down-bad {
+        color: var(--red);
+      }
+      .slide__kpi-trend--neutral {
+        color: var(--text-dim);
+      }
+
+      /* ─── Slide Type: Quote ───────────────────────────────────────── */
+      .slide--quote {
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        background: var(--accent-dim);
+      }
+
+      .slide--quote .slide__content {
+        max-width: 720px;
+        position: relative;
+      }
+
+      .slide__quote-mark {
+        font-family: var(--font-heading);
+        font-size: clamp(80px, 15vw, 160px);
+        font-weight: 800;
+        line-height: 0.8;
+        color: var(--accent);
+        opacity: 0.15;
+        display: block;
+        margin-bottom: -0.2em;
+        user-select: none;
+      }
+
+      .slide--quote .slide__body {
+        font-size: clamp(20px, 3.5vw, 36px);
+        font-weight: 500;
+        line-height: 1.4;
+        color: var(--text);
+        text-wrap: balance;
+      }
+
+      .slide__attribution {
+        margin-top: 1.5em;
+        font-family: var(--font-mono);
+        font-size: clamp(12px, 1.4vw, 16px);
+        font-weight: 600;
+        color: var(--accent);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="deck">
+      <!-- ── Slide 1: Title ─────────────────────────────────────────── -->
+      <section class="slide slide--title">
+        <div class="reveal">
+          <p class="slide__label">QUARTERLY UPDATE · Q2 2026</p>
+        </div>
+        <div class="reveal">
+          <h1 class="slide__display">Project Overview</h1>
+        </div>
+        <div class="reveal">
+          <p class="slide__body">
+            A snapshot of where we are, what we've achieved, and where we're
+            headed
+          </p>
+        </div>
+      </section>
+
+      <!-- ── Slide 2: Divider ───────────────────────────────────────── -->
+      <section class="slide slide--divider">
+        <span class="slide__number">01</span>
+        <div class="slide__content">
+          <div class="reveal">
+            <p class="slide__label">Section</p>
+          </div>
+          <div class="reveal">
+            <h2 class="slide__heading">The Challenge</h2>
+          </div>
+          <div class="reveal">
+            <p class="slide__body">Understanding the problem space</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── Slide 3: Content ───────────────────────────────────────── -->
+      <section class="slide slide--content">
+        <div class="slide__inner">
+          <div class="slide__main">
+            <div class="reveal">
+              <p class="slide__label">KEY FINDINGS</p>
+            </div>
+            <div class="reveal">
+              <h2 class="slide__heading">Context Is Scattered Everywhere</h2>
+            </div>
+            <ul class="slide__bullets">
+              <li class="reveal">
+                People's heads — decisions made in meetings, never written down
+              </li>
+              <li class="reveal">
+                Slack threads — critical context buried 200 messages deep
+              </li>
+              <li class="reveal">
+                Meeting notes — transcripts that nobody reads twice
+              </li>
+              <li class="reveal">
+                Jira, Confluence, Miro — fragmented across tools
+              </li>
+            </ul>
+          </div>
+          <div class="slide__aside reveal">
+            <svg
+              width="120"
+              height="120"
+              viewBox="0 0 120 120"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+              aria-hidden="true"
+            >
+              <rect width="120" height="120" rx="16" fill="var(--border)" />
+              <text
+                x="60"
+                y="68"
+                font-family="'DM Sans', sans-serif"
+                font-size="48"
+                font-weight="700"
+                text-anchor="middle"
+                fill="var(--text-dim)"
+              >
+                ?
+              </text>
+            </svg>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── Slide 4: Dashboard ─────────────────────────────────────── -->
+      <section class="slide slide--dashboard">
+        <div class="reveal">
+          <h2 class="slide__heading">Key Metrics</h2>
+        </div>
+        <div class="slide__kpis">
+          <div class="slide__kpi reveal">
+            <span class="slide__kpi-label">Latency</span>
+            <span class="slide__kpi-val">42ms</span>
+            <span class="slide__kpi-trend slide__kpi-trend--down-good"
+              >↓ 58% vs last month</span
+            >
+          </div>
+          <div class="slide__kpi reveal">
+            <span class="slide__kpi-label">Uptime</span>
+            <span class="slide__kpi-val">99.9%</span>
+            <span class="slide__kpi-trend slide__kpi-trend--up"
+              >↑ from 98.2%</span
+            >
+          </div>
+          <div class="slide__kpi reveal">
+            <span class="slide__kpi-label">Requests / Day</span>
+            <span class="slide__kpi-val">1.2M</span>
+            <span class="slide__kpi-trend slide__kpi-trend--neutral"
+              >→ steady</span
+            >
+          </div>
+          <div class="slide__kpi reveal">
+            <span class="slide__kpi-label">Open Incidents</span>
+            <span class="slide__kpi-val">7</span>
+            <span class="slide__kpi-trend slide__kpi-trend--down-bad"
+              >↑ from 3</span
+            >
+          </div>
+        </div>
+      </section>
+
+      <!-- ── Slide 5: Quote ─────────────────────────────────────────── -->
+      <section class="slide slide--quote">
+        <div class="slide__content">
+          <div class="reveal">
+            <span class="slide__quote-mark">"</span>
+          </div>
+          <div class="reveal">
+            <p class="slide__body">
+              The best way to predict the future is to invent it.
+            </p>
+          </div>
+          <div class="reveal">
+            <p class="slide__attribution">— Alan Kay</p>
+          </div>
+        </div>
+      </section>
+    </div>
+    <!-- /.deck -->
+
+    <script>
+      function SlideEngine() {
+        this.deck = document.querySelector(".deck");
+        this.slides = [].slice.call(document.querySelectorAll(".slide"));
+        this.current = 0;
+        this.total = this.slides.length;
+        this.buildChrome();
+        this.bindEvents();
+        this.observe();
+        this.update();
+      }
+
+      SlideEngine.prototype.buildChrome = function () {
+        // Progress bar
+        var bar = document.createElement("div");
+        bar.className = "deck-progress";
+        document.body.appendChild(bar);
+        this.bar = bar;
+
+        // Navigation dots
+        var dots = document.createElement("div");
+        dots.className = "deck-dots";
+        var self = this;
+        this.slides.forEach(function (_, i) {
+          var d = document.createElement("button");
+          d.className = "deck-dot";
+          d.title = "Slide " + (i + 1);
+          d.onclick = function () {
+            self.goTo(i);
+          };
+          dots.appendChild(d);
+        });
+        document.body.appendChild(dots);
+        this.dots = [].slice.call(dots.children);
+
+        // Slide counter
+        var ctr = document.createElement("div");
+        ctr.className = "deck-counter";
+        document.body.appendChild(ctr);
+        this.counter = ctr;
+
+        // Keyboard hints
+        var hints = document.createElement("div");
+        hints.className = "deck-hints";
+        hints.textContent = "\u2190 \u2192 or scroll to navigate";
+        document.body.appendChild(hints);
+        this.hints = hints;
+        this.hintTimer = setTimeout(function () {
+          hints.classList.add("faded");
+        }, 4000);
+      };
+
+      SlideEngine.prototype.bindEvents = function () {
+        var self = this;
+
+        document.addEventListener("keydown", function (e) {
+          if (
+            e.target.closest(
+              ".mermaid-wrap,.table-scroll,.code-scroll,input,textarea,[contenteditable]",
+            )
+          )
+            return;
+
+          if (
+            ["ArrowDown", "ArrowRight", " ", "PageDown"].indexOf(e.key) > -1
+          ) {
+            e.preventDefault();
+            self.next();
+          } else if (["ArrowUp", "ArrowLeft", "PageUp"].indexOf(e.key) > -1) {
+            e.preventDefault();
+            self.prev();
+          } else if (e.key === "Home") {
+            e.preventDefault();
+            self.goTo(0);
+          } else if (e.key === "End") {
+            e.preventDefault();
+            self.goTo(self.total - 1);
+          }
+
+          self.fadeHints();
+        });
+
+        // Touch swipe
+        var tY;
+        this.deck.addEventListener(
+          "touchstart",
+          function (e) {
+            tY = e.touches[0].clientY;
+          },
+          { passive: true },
+        );
+
+        this.deck.addEventListener("touchend", function (e) {
+          var dy = tY - e.changedTouches[0].clientY;
+          if (Math.abs(dy) > 50) {
+            dy > 0 ? self.next() : self.prev();
+          }
+        });
+      };
+
+      SlideEngine.prototype.observe = function () {
+        var self = this;
+        var obs = new IntersectionObserver(
+          function (entries) {
+            entries.forEach(function (entry) {
+              if (entry.isIntersecting) {
+                entry.target.classList.add("visible");
+                self.current = self.slides.indexOf(entry.target);
+                self.update();
+              }
+            });
+          },
+          { threshold: 0.5 },
+        );
+
+        this.slides.forEach(function (s) {
+          obs.observe(s);
+        });
+      };
+
+      SlideEngine.prototype.goTo = function (i) {
+        this.slides[Math.max(0, Math.min(i, this.total - 1))].scrollIntoView({
+          behavior: "smooth",
+        });
+      };
+
+      SlideEngine.prototype.next = function () {
+        if (this.current < this.total - 1) this.goTo(this.current + 1);
+      };
+
+      SlideEngine.prototype.prev = function () {
+        if (this.current > 0) this.goTo(this.current - 1);
+      };
+
+      SlideEngine.prototype.update = function () {
+        this.bar.style.width = ((this.current + 1) / this.total) * 100 + "%";
+        var c = this.current;
+        this.dots.forEach(function (d, i) {
+          d.classList.toggle("active", i === c);
+        });
+        this.counter.textContent = this.current + 1 + " / " + this.total;
+      };
+
+      SlideEngine.prototype.fadeHints = function () {
+        clearTimeout(this.hintTimer);
+        this.hints.classList.add("faded");
+      };
+
+      new SlideEngine();
+    </script>
+  </body>
+</html>

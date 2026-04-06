@@ -2,11 +2,11 @@
 
 import path from "node:path";
 import fs from "node:fs";
-import { exec } from "node:child_process";
+import { exec, execSync } from "node:child_process";
 import { createInterface } from "node:readline/promises";
 import { startServer } from "./start.js";
 
-const COMMAND_TEMPLATE = `---
+const DECKS_COMMAND_TEMPLATE = `---
 description: Launch the div.deck presentation editor
 ---
 
@@ -17,6 +17,34 @@ Start the div.deck slide editor for the presentations in this project.
 3. Open http://localhost:3001 in the browser
 4. Tell the user the editor is running and they can access it at http://localhost:3001
 `;
+
+function runClaude(args: string): boolean {
+  try {
+    execSync(`claude ${args}`, { stdio: "pipe" });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function installSkill(): void {
+  // Add the div-decks marketplace (idempotent — skips if already added)
+  if (runClaude("plugin marketplace add NickCallaghan/div-decks")) {
+    console.log(`  Added div-decks marketplace`);
+  } else {
+    console.log(`  div-decks marketplace already registered`);
+  }
+
+  // Install the new-deck skill from the marketplace
+  if (runClaude("plugin install --scope project new-deck@div-decks")) {
+    console.log(`  Installed new-deck skill`);
+  } else {
+    console.log(`  new-deck skill already installed (or install failed)`);
+    console.log(
+      `  You can install manually: claude plugin install --scope project new-deck@div-decks`,
+    );
+  }
+}
 
 function printUsage(): void {
   console.log(`
@@ -71,20 +99,24 @@ async function runInit(): Promise<void> {
     console.log(`  Added "deck" script to package.json`);
   }
 
-  // Create Claude Code command
+  // Create Claude Code /decks command
   const commandDir = path.resolve(".claude", "commands");
-  const commandPath = path.join(commandDir, "presentations.md");
+  const commandPath = path.join(commandDir, "decks.md");
   if (!fs.existsSync(commandDir)) {
     fs.mkdirSync(commandDir, { recursive: true });
   }
-  const commandContent = COMMAND_TEMPLATE.replace("__DIR__", dir);
+  const commandContent = DECKS_COMMAND_TEMPLATE.replace("__DIR__", dir);
   fs.writeFileSync(commandPath, commandContent, "utf-8");
-  console.log(`  Created .claude/commands/presentations.md`);
+  console.log(`  Created .claude/commands/decks.md`);
+
+  // Install the new-deck skill (copies files, registers marketplace, enables plugin)
+  installSkill();
 
   console.log(`
   Setup complete! You can now:
     npm run deck              Start the editor
-    /presentations            Use in Claude Code
+    /decks                    Launch editor from Claude Code
+    /new-deck                 Generate a new slide deck
   `);
 }
 
@@ -148,7 +180,13 @@ async function main(): Promise<void> {
   setTimeout(() => openBrowser(`http://localhost:${port}`), 500);
 }
 
-main().catch((err) => {
-  console.error(err);
-  process.exit(1);
-});
+// Only run when executed directly, not when imported for testing
+const isDirectRun =
+  import.meta.url === `file://${process.argv[1]}` ||
+  process.argv[1]?.endsWith("/cli.js");
+if (isDirectRun) {
+  main().catch((err) => {
+    console.error(err);
+    process.exit(1);
+  });
+}
