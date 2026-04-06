@@ -89,8 +89,14 @@ describe("parsePresentation", () => {
     expect(model.title).toBe("fallback");
   });
 
-  it("handles unknown slide types gracefully", () => {
+  it("passes through any slide--{type} as the type", () => {
     const html = MINIMAL_HTML.replace("slide--title", "slide--custom");
+    const model = parsePresentation("test.html", html);
+    expect(model.slides[0].type).toBe("custom");
+  });
+
+  it("returns 'unknown' when no slide--{type} class exists", () => {
+    const html = MINIMAL_HTML.replace("slide--title", "");
     const model = parsePresentation("test.html", html);
     expect(model.slides[0].type).toBe("unknown");
   });

@@ -67,7 +67,15 @@ EDITING → blur / click outside / Esc → SELECTED
 
 ## Element Categories
 
-### Text-editable elements (TEXT_SELECTOR)
+### Text-editable elements
+
+Detected by three mechanisms, checked in order:
+
+1. **Data attribute opt-out**: `data-se-editable="false"` excludes any element
+2. **TEXT_SELECTOR whitelist**: standard semantic elements plus legacy component classes
+3. **Leaf-div heuristic**: any `<div>` with no child elements and non-empty text content
+
+TEXT_SELECTOR:
 
 ```
 h1, h2, h3, h4, h5, h6, p, li, span, a,
@@ -78,17 +86,24 @@ div.slide__kpi-val, div.slide__kpi-label, div.slide__kpi-trend,
 div.slide__code-filename, div.slide__body, div.slide__aside
 ```
 
+The leaf-div heuristic catches text labels/values in branded presentations that use custom class names or inline styles (e.g., `<div style="font-size:22px;">Title</div>`).
+
 **Excluded from text editing** (selectable but not editable):
 
 - Elements inside `<svg>` or `<script>` tags
 - `.mermaid-wrap` containers (diagram blocks)
 - `.slide__decor` elements (decorative SVGs)
+- Elements with `data-se-editable="false"`
 
-### Reorderable elements (REORDERABLE_SELECTOR)
+### Reorderable elements
 
-Elements that get drag handles. Must have at least one sibling (if no siblings, the walk-up tries ancestors).
+Elements that get drag handles. Detected by three mechanisms, checked in order:
 
-Approach: semantic elements are reorderable by default, plus specific atomic units and a direct-child catch-all for wrapper divs.
+1. **Data attribute opt-in**: `data-se-reorderable` — element is explicitly reorderable (must have siblings)
+2. **REORDERABLE_SELECTOR whitelist**: standard semantic elements plus legacy component classes (must have siblings; walks up ancestors if not)
+3. **Sibling-homogeneity heuristic**: any element with ≥1 CSS class that shares the same tag AND at least one class with a sibling is part of a repeating group → reorderable
+
+REORDERABLE_SELECTOR:
 
 ```
 h1, h2, h3, h4, h5, h6              — headings
@@ -101,6 +116,16 @@ div.slide__kpi                       — KPI cards (dragged as a unit)
 div.slide__panel                     — split slide panels
 tbody > tr                           — table rows
 ```
+
+The sibling-homogeneity heuristic enables reordering of branded components without hardcoded class names. For example, three `<div class="flow-step">` siblings are automatically detected as a repeating group. The heuristic requires same-tag + shared-class to avoid false positives (e.g., `<div class="slide__text">` next to `<div class="slide__aside">` are NOT matched because they share no class).
+
+### Atomic containers
+
+Elements that drag as a unit (children don't get individual handles). Detected by:
+
+1. **`data-se-atomic` attribute** — explicit opt-in
+2. **Class ending in "card"** — regex `/card$/` (e.g., `ve-card`, `skill-card`, `turtle-card`)
+3. **Legacy classes** — `slide__kpi`, `slide__panel`, `status`, `tag`
 
 ## Drag Behavior
 

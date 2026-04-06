@@ -10,22 +10,7 @@ const SLIDE_TYPE_REGEX = /slide--(\w+)/;
 function parseSlideType(className: string): SlideType {
   const match = className.match(SLIDE_TYPE_REGEX);
   if (!match) return "unknown";
-  const type = match[1];
-  const validTypes: SlideType[] = [
-    "title",
-    "divider",
-    "content",
-    "split",
-    "diagram",
-    "dashboard",
-    "table",
-    "code",
-    "quote",
-    "bleed",
-  ];
-  return validTypes.includes(type as SlideType)
-    ? (type as SlideType)
-    : "unknown";
+  return match[1];
 }
 
 function extractComments(rawHtml: string): Map<number, string> {

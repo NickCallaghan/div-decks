@@ -164,17 +164,25 @@ export const EDITOR_BRIDGE_SCRIPT = `
     if (!el || el.closest('svg') || el.closest('script')) return false;
     // Opaque blocks: selectable/movable but not text-editable
     if (el.closest('.mermaid-wrap') || el.closest('.slide__decor')) return false;
-    return el.closest(TEXT_SELECTOR) !== null;
+    // Explicit opt-out via data attribute
+    if (el.hasAttribute && el.hasAttribute('data-se-editable') && el.getAttribute('data-se-editable') === 'false') return false;
+    if (el.closest(TEXT_SELECTOR) !== null) return true;
+    // Leaf-div heuristic: a <div> with no child elements and text content
+    // is always a text label/value, regardless of class name
+    if (el.tagName === 'DIV' && el.children.length === 0 && el.textContent && el.textContent.trim()) return true;
+    return false;
   }
 
   // Atomic containers — always dragged as a unit, children don't get
-  // independent handles. Matched by class name pattern: any element
-  // with a class ending in "card" (ve-card, turtle-card, etc.) or
-  // specific component classes. This is generic enough to work across
-  // any presentation without listing every card class name.
+  // independent handles. Detected by:
+  // 1. Explicit data-se-atomic attribute (works with any brand)
+  // 2. Class name ending in "card" (ve-card, turtle-card, skill-card, etc.)
+  // 3. Specific legacy component classes (slide__kpi, slide__panel, status, tag)
   function isAtomicContainer(el) {
     var cur = el;
     while (cur && cur.tagName !== 'SECTION') {
+      // Explicit opt-in via data attribute
+      if (cur.hasAttribute && cur.hasAttribute('data-se-atomic')) return cur;
       if (cur.classList) {
         for (var i = 0; i < cur.classList.length; i++) {
           var cls = cur.classList[i];
@@ -189,17 +197,56 @@ export const EDITOR_BRIDGE_SCRIPT = `
     return null;
   }
 
+  // Sibling-homogeneity heuristic: an element is part of a repeating
+  // group if it shares the same tag AND at least one CSS class with a
+  // sibling. This detects custom branded components (flow-step, stat-card,
+  // reveal-wrapped cards, etc.) without any hardcoded class names.
+  // Classless elements are NOT matched — they're ambiguous (could be
+  // layout columns or repeating cards). Use data-se-reorderable for those.
+  function hasSimilarSiblings(el) {
+    if (!el.classList || el.classList.length === 0) return false;
+    var parent = el.parentElement;
+    if (!parent) return false;
+    var siblings = parent.children;
+    for (var i = 0; i < siblings.length; i++) {
+      var sib = siblings[i];
+      if (sib === el) continue;
+      if (sib.tagName !== el.tagName) continue;
+      if (!sib.classList || sib.classList.length === 0) continue;
+      // Check for at least one shared class
+      for (var j = 0; j < el.classList.length; j++) {
+        if (sib.classList.contains(el.classList[j])) return true;
+      }
+    }
+    return false;
+  }
+
   // ===== Handle: find target, position, show/hide =====
   function findHandleTarget(el) {
     if (!el || el.tagName === 'HTML' || el.tagName === 'BODY') return null;
     if (el.classList && (el.classList.contains('deck') || el.classList.contains('slide'))) return null;
     if (el.closest('.se-handle') || el.closest('.se-menu')) return null;
+    // Explicit data-se-reorderable attribute — highest priority
+    if (el.hasAttribute && el.hasAttribute('data-se-reorderable')) {
+      if (el.previousElementSibling || el.nextElementSibling) return el;
+    }
     // If inside an atomic container (explicit class or grid child),
     // the container is always the drag target
     var atomic = isAtomicContainer(el);
     if (atomic) {
       if (atomic.previousElementSibling || atomic.nextElementSibling) return atomic;
       return null;
+    }
+    // Sibling-homogeneity heuristic — walk up looking for an element
+    // that's part of a repeating group (same tag + shared class with a
+    // sibling). Runs BEFORE the selector walk-up so that inner repeating
+    // components (e.g. div.reveal card siblings) are found before a
+    // broader match like section.slide > * catches the outer wrapper.
+    var cur = el;
+    while (cur && cur.tagName !== 'SECTION') {
+      if (cur.classList && (cur.classList.contains('deck') || cur.classList.contains('slide'))) break;
+      if (hasSimilarSiblings(cur)) return cur;
+      cur = cur.parentElement;
     }
     // Walk up through matching ancestors — if the innermost match has no
     // siblings (nothing to reorder with), try its parent instead
@@ -384,10 +431,27 @@ export const EDITOR_BRIDGE_SCRIPT = `
 
     // Temporarily hide indicator so elementFromPoint doesn't hit it
     dropIndicator.style.display = 'none';
-    var target = document.elementFromPoint(e.clientX, e.clientY);
+    // Use drag element's horizontal center for hit-testing, not the mouse x.
+    // The handle sits left of the element, so the mouse x may be over empty
+    // slide background where elementFromPoint would miss sibling elements.
+    var dragRect = dragEl.getBoundingClientRect();
+    var hitX = dragRect.left + dragRect.width / 2;
+    var target = document.elementFromPoint(hitX, e.clientY);
     if (!target) return;
-    var siblingTarget = isAtomicContainer(target) || target.closest(REORDERABLE_SELECTOR);
-    if (!siblingTarget || siblingTarget === dragEl || siblingTarget.parentElement !== dragEl.parentElement) {
+    // Walk up from mouse target to find an element at the same DOM level
+    // as dragEl. This works regardless of how the drag element was detected
+    // (selector, sibling-homogeneity, data attribute, etc.)
+    var siblingTarget = null;
+    var cur = target;
+    var dragParent = dragEl.parentElement;
+    while (cur && cur.tagName !== 'SECTION') {
+      if (cur.parentElement === dragParent && cur !== dragEl) {
+        siblingTarget = cur;
+        break;
+      }
+      cur = cur.parentElement;
+    }
+    if (!siblingTarget) {
       dropIndicator.style.display = 'none';
       dropTarget = null;
       return;
@@ -502,6 +566,9 @@ export const EDITOR_BRIDGE_SCRIPT = `
     if (!clickedEl) return;
 
     var textEl = clickedEl.closest(TEXT_SELECTOR);
+    // Leaf-div heuristic: if no TEXT_SELECTOR match, check if clicked element
+    // is a text-only div (catches branded labels with custom class names)
+    if (!textEl && isTextElement(clickedEl)) textEl = clickedEl;
 
     // Case 1: Currently editing
     if (isEditing && selectedEl) {

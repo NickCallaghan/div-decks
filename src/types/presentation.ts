@@ -9,7 +9,8 @@ export type SlideType =
   | "code"
   | "quote"
   | "bleed"
-  | "unknown";
+  | "unknown"
+  | (string & {}); // Accept any slide--{type} from branded presentations
 
 export interface SlideModel {
   id: string;
