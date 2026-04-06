@@ -22,7 +22,8 @@ dist-ssr
 /blob-report/
 /playwright/.cache/
 
-# Presentation backups
+# Presentations (user data, not repo content)
+presentations/*.html
 presentations/*.bak-*.html
 
 
