@@ -54,6 +54,7 @@ E2E tests cover app loading, file browsing, presentation opening, and slide navi
 - **Write tests for new functionality.** Every new feature or bug fix should include tests. Parser/serializer changes need round-trip tests. Store changes need state transition tests. If a bug is fixed, add a regression test that would have caught it.
 - **Update specs when adding features.** When the architecture, interaction model, or API changes, update the corresponding file in `specs/`. `specs/architecture.md` covers data model, data flow, API, and project structure. `specs/interaction-model.md` covers the bridge state machine, element selectors, drag behavior, and keyboard shortcuts. Design docs and feature specs also go in `specs/` — do not create a separate `docs/` directory.
 - **Run tests before committing.** `npm test` must pass. Don't commit with failing tests.
+- **Update CHANGELOG.md with every version bump.** When bumping the version in package.json, add a corresponding entry to CHANGELOG.md following the [Keep a Changelog](https://keepachangelog.com/) format. Group changes under Added, Changed, Fixed, or Removed headings. A pre-commit hook enforces this — version bump commits without changelog updates will be blocked.
 
 ## Verification Workflow
 

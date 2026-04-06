@@ -4,6 +4,56 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.4.0] - 2026-04-06
+
+### Added
+
+- Toast notification system — save success, error feedback for all API failures
+- 12 new E2E tests covering editing, save workflow, slide navigation, undo/redo
+- 11 new component unit tests for dispatchSlideMessage, formatSize, formatDate
+
+### Changed
+
+- Refactored EditorToolbar from 537 LOC to 278 LOC — extracted GitStatusBadge, SlideNavigation, SelectedElementIndicator, shared toolbar primitives, useKeyboardShortcuts hook
+- All silent `console.error` handlers replaced with user-visible toast notifications
+
+## [0.3.5] - 2026-04-06
+
+### Changed
+
+- Rewrote README with problem statement, new-deck skill docs, and updated screenshot
+
+## [0.3.4] - 2026-04-06
+
+### Added
+
+- Example presentation explaining how div.deck works
+
+## [0.3.3] - 2026-04-06
+
+### Fixed
+
+- CLI not running via npx
+- Exclude dist-server from test runner
+
+## [0.3.2] - 2026-04-06
+
+### Fixed
+
+- Remove duplicate commands/new-deck.md — skill already registers /new-deck
+
+## [0.3.1] - 2026-04-06
+
+### Added
+
+- `/new-deck` skill for generating div.deck-compatible slide decks
+- marketplace.json for Claude Code plugin discovery
+
+### Fixed
+
+- Restructured new-deck plugin to match Claude Code conventions
+- Normalized repository URL format
+
 ## [0.3.0] - 2026-04-06
 
 ### Added
