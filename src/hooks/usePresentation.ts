@@ -28,6 +28,7 @@ export function usePresentation() {
     await savePresentation(presentation.filename, html);
     setSavedHtml(html);
     setIsDirty(false);
+    window.dispatchEvent(new Event("git-status-refresh"));
   }, [presentation, setSavedHtml, setIsDirty]);
 
   return { presentation, open, save };

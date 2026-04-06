@@ -1,6 +1,7 @@
 import express from "express";
 import cors from "cors";
 import { createPresentationsRouter } from "./routes/presentations.js";
+import { createGitRouter } from "./routes/git.js";
 import path from "node:path";
 
 const app = express();
@@ -19,6 +20,7 @@ const presentationsDir = path.resolve(
 app.use("/presentations", express.static(presentationsDir));
 
 app.use("/api/presentations", createPresentationsRouter(presentationsDir));
+app.use("/api/git", createGitRouter(presentationsDir));
 
 app.listen(PORT, () => {
   console.log(`div.deck server running on http://localhost:${PORT}`);
