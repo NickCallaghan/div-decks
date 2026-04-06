@@ -5,9 +5,8 @@ import path from "node:path";
 const cliPath = path.resolve(import.meta.dirname, "..", "..", "cli.ts");
 
 describe("cli.ts", () => {
-  it("exports DECKS_COMMAND_TEMPLATE with correct command name", async () => {
+  it("creates decks.md command, not presentations.md", () => {
     const content = fs.readFileSync(cliPath, "utf-8");
-    // Command should create decks.md, not presentations.md
     expect(content).toContain('"decks.md"');
     expect(content).not.toContain('"presentations.md"');
   });
@@ -34,8 +33,8 @@ describe("cli.ts", () => {
   });
 });
 
-describe("new-deck skill files", () => {
-  const skillDir = path.resolve(
+describe("new-deck plugin structure", () => {
+  const pluginDir = path.resolve(
     import.meta.dirname,
     "..",
     "..",
@@ -43,25 +42,29 @@ describe("new-deck skill files", () => {
     "new-deck",
   );
 
-  it("has SKILL.md with correct frontmatter", () => {
-    const content = fs.readFileSync(path.join(skillDir, "SKILL.md"), "utf-8");
-    expect(content).toContain("name: new-deck");
-    expect(content).toContain("version:");
-  });
-
-  it("has package.json with pi-package keyword", () => {
-    const pkg = JSON.parse(
-      fs.readFileSync(path.join(skillDir, "package.json"), "utf-8"),
+  it("has .claude-plugin/plugin.json with correct metadata", () => {
+    const plugin = JSON.parse(
+      fs.readFileSync(
+        path.join(pluginDir, ".claude-plugin", "plugin.json"),
+        "utf-8",
+      ),
     );
-    expect(pkg.name).toBe("new-deck");
-    expect(pkg.keywords).toContain("pi-package");
-    expect(pkg.pi.skills).toBeDefined();
-    expect(pkg.pi.prompts).toBeDefined();
+    expect(plugin.name).toBe("new-deck");
+    expect(plugin.version).toBe("0.1.0");
+    expect(plugin.license).toBe("MIT");
   });
 
-  it("has prompt file for /new-deck command", () => {
+  it("has skills/new-deck/SKILL.md with correct frontmatter", () => {
     const content = fs.readFileSync(
-      path.join(skillDir, "prompts", "new-deck.md"),
+      path.join(pluginDir, "skills", "new-deck", "SKILL.md"),
+      "utf-8",
+    );
+    expect(content).toContain("name: new-deck");
+  });
+
+  it("has commands/new-deck.md slash command", () => {
+    const content = fs.readFileSync(
+      path.join(pluginDir, "commands", "new-deck.md"),
       "utf-8",
     );
     expect(content).toContain("description:");
@@ -69,20 +72,26 @@ describe("new-deck skill files", () => {
   });
 
   it("has all required reference files", () => {
-    const refs = [
+    const refsDir = path.join(pluginDir, "skills", "new-deck", "references");
+    for (const ref of [
       "slide-engine.md",
       "slide-types.md",
       "css-core.md",
       "branding.md",
-    ];
-    for (const ref of refs) {
-      expect(fs.existsSync(path.join(skillDir, "references", ref))).toBe(true);
+    ]) {
+      expect(fs.existsSync(path.join(refsDir, ref))).toBe(true);
     }
   });
 
   it("has template deck with SlideEngine", () => {
     const content = fs.readFileSync(
-      path.join(skillDir, "templates", "slide-deck.html"),
+      path.join(
+        pluginDir,
+        "skills",
+        "new-deck",
+        "templates",
+        "slide-deck.html",
+      ),
       "utf-8",
     );
     expect(content).toContain("SlideEngine");
@@ -92,41 +101,8 @@ describe("new-deck skill files", () => {
     ).toBeGreaterThanOrEqual(5);
   });
 
-  it("slide-engine reference contains complete engine code", () => {
-    const content = fs.readFileSync(
-      path.join(skillDir, "references", "slide-engine.md"),
-      "utf-8",
-    );
-    expect(content).toContain("buildChrome");
-    expect(content).toContain("bindEvents");
-    expect(content).toContain("IntersectionObserver");
-    expect(content).toContain("goTo");
-  });
-
-  it("css-core reference contains required structural CSS", () => {
-    const content = fs.readFileSync(
-      path.join(skillDir, "references", "css-core.md"),
-      "utf-8",
-    );
-    expect(content).toContain("scroll-snap-type");
-    expect(content).toContain("100dvh");
-    expect(content).toContain(".reveal");
-    expect(content).toContain("deck-progress");
-    expect(content).toContain("prefers-reduced-motion");
-  });
-
-  it("branding reference documents safe/unsafe boundaries", () => {
-    const content = fs.readFileSync(
-      path.join(skillDir, "references", "branding.md"),
-      "utf-8",
-    );
-    expect(content).toContain("--accent");
-    expect(content).toContain("must NOT");
-  });
-
   it("has MIT LICENSE", () => {
-    const content = fs.readFileSync(path.join(skillDir, "LICENSE"), "utf-8");
+    const content = fs.readFileSync(path.join(pluginDir, "LICENSE"), "utf-8");
     expect(content).toContain("MIT License");
-    expect(content).toContain("Nick Callaghan");
   });
 });

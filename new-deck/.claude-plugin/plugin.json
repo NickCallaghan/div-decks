@@ -1,0 +1,13 @@
+{
+  "name": "new-deck",
+  "description": "Generate self-contained HTML slide decks compatible with div.deck. Use when the user asks to create a slide deck, presentation, or invokes /new-deck.",
+  "version": "0.1.0",
+  "author": {
+    "name": "Nick Callaghan",
+    "email": "nicholas.callaghan@gmail.com"
+  },
+  "homepage": "https://github.com/NickCallaghan/div-decks",
+  "repository": "https://github.com/NickCallaghan/div-decks",
+  "license": "MIT",
+  "keywords": ["slides", "presentation", "html", "div-deck"]
+}
