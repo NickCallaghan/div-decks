@@ -1,0 +1,1307 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>How DivDeck Works</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      /* ─── Theme Variables ─────────────────────────────────────────── */
+      :root {
+        --bg: #0a0e14;
+        --surface: #131820;
+        --text: #e6e6e6;
+        --text-dim: #5c6773;
+        --border: #1f2937;
+        --accent: #39d353;
+        --accent-dim: rgba(57, 211, 83, 0.08);
+        --amber: #f59e0b;
+        --red: #ef4444;
+        --green: #39d353;
+        --font-body: "JetBrains Mono", monospace;
+        --font-heading: "JetBrains Mono", monospace;
+        --font-mono: "JetBrains Mono", monospace;
+      }
+
+      body {
+        font-family: var(--font-body);
+        background: var(--bg);
+        color: var(--text);
+        -webkit-font-smoothing: antialiased;
+      }
+
+      /* ─── Reset & Deck Container ──────────────────────────────────── */
+      *,
+      *::before,
+      *::after {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      .deck {
+        height: 100dvh;
+        overflow-y: auto;
+        scroll-snap-type: y mandatory;
+        scroll-behavior: smooth;
+        -webkit-overflow-scrolling: touch;
+      }
+
+      .slide {
+        height: 100dvh;
+        scroll-snap-align: start;
+        overflow: hidden;
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        padding: clamp(40px, 6vh, 80px) clamp(40px, 8vw, 120px);
+        isolation: isolate;
+        opacity: 0;
+        transform: translateY(40px) scale(0.98);
+        transition:
+          opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1),
+          transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+      }
+
+      .slide.visible {
+        opacity: 1;
+        transform: none;
+      }
+
+      /* ─── Reveal Animation ────────────────────────────────────────── */
+      .slide .reveal {
+        opacity: 0;
+        transform: translateY(20px);
+        transition:
+          opacity 0.5s cubic-bezier(0.16, 1, 0.3, 1),
+          transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+      }
+
+      .slide.visible .reveal {
+        opacity: 1;
+        transform: none;
+      }
+      .slide.visible .reveal:nth-child(1) { transition-delay: 0.1s; }
+      .slide.visible .reveal:nth-child(2) { transition-delay: 0.2s; }
+      .slide.visible .reveal:nth-child(3) { transition-delay: 0.3s; }
+      .slide.visible .reveal:nth-child(4) { transition-delay: 0.4s; }
+      .slide.visible .reveal:nth-child(5) { transition-delay: 0.5s; }
+      .slide.visible .reveal:nth-child(6) { transition-delay: 0.6s; }
+      .slide.visible .reveal:nth-child(7) { transition-delay: 0.7s; }
+      .slide.visible .reveal:nth-child(8) { transition-delay: 0.8s; }
+
+      @media (prefers-reduced-motion: reduce) {
+        .slide,
+        .slide .reveal {
+          opacity: 1 !important;
+          transform: none !important;
+          transition: none !important;
+        }
+      }
+
+      /* ─── Typography ──────────────────────────────────────────────── */
+      .slide__display {
+        font-size: clamp(48px, 10vw, 120px);
+        font-weight: 800;
+        letter-spacing: -3px;
+        line-height: 0.95;
+        text-wrap: balance;
+      }
+
+      .slide__heading {
+        font-size: clamp(28px, 5vw, 48px);
+        font-weight: 700;
+        letter-spacing: -1px;
+        line-height: 1.1;
+        text-wrap: balance;
+        margin-bottom: 0.5em;
+      }
+
+      .slide__body {
+        font-size: clamp(16px, 2.2vw, 24px);
+        line-height: 1.6;
+        text-wrap: pretty;
+        color: var(--text-dim);
+      }
+
+      .slide__label {
+        font-family: var(--font-mono);
+        font-size: clamp(10px, 1.2vw, 14px);
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        color: var(--accent);
+        margin-bottom: 16px;
+      }
+
+      /* ─── Nav Chrome ──────────────────────────────────────────────── */
+      .deck-progress {
+        position: fixed;
+        top: 0;
+        left: 0;
+        height: 3px;
+        background: var(--accent);
+        z-index: 100;
+        transition: width 0.3s ease;
+        pointer-events: none;
+      }
+
+      .deck-dots {
+        position: fixed;
+        right: clamp(12px, 2vw, 24px);
+        top: 50%;
+        transform: translateY(-50%);
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        z-index: 100;
+        padding: 8px;
+        background: color-mix(in srgb, var(--bg) 60%, transparent 40%);
+        border-radius: 20px;
+        backdrop-filter: blur(4px);
+      }
+
+      .deck-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--text-dim);
+        opacity: 0.3;
+        border: none;
+        padding: 0;
+        cursor: pointer;
+        transition:
+          opacity 0.2s ease,
+          transform 0.2s ease;
+      }
+
+      .deck-dot:hover { opacity: 0.6; }
+
+      .deck-dot.active {
+        opacity: 1;
+        transform: scale(1.5);
+        background: var(--accent);
+      }
+
+      .deck-counter {
+        position: fixed;
+        bottom: clamp(12px, 2vh, 24px);
+        right: clamp(12px, 2vw, 24px);
+        font-family: var(--font-mono);
+        font-size: 12px;
+        color: var(--text-dim);
+        z-index: 100;
+        font-variant-numeric: tabular-nums;
+      }
+
+      .deck-hints {
+        position: fixed;
+        bottom: clamp(12px, 2vh, 24px);
+        left: 50%;
+        transform: translateX(-50%);
+        font-family: var(--font-mono);
+        font-size: 11px;
+        color: var(--text-dim);
+        opacity: 0.6;
+        z-index: 100;
+        transition: opacity 0.5s ease;
+        white-space: nowrap;
+      }
+
+      .deck-hints.faded {
+        opacity: 0;
+        pointer-events: none;
+      }
+
+      /* ─── Dot Grid Background ─────────────────────────────────────── */
+      .slide--title,
+      .slide--content,
+      .slide--dashboard,
+      .slide--code,
+      .slide--table,
+      .slide--quote {
+        background: var(--bg);
+      }
+
+      .slide--title::after,
+      .slide--content::after,
+      .slide--dashboard::after,
+      .slide--code::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background-image: radial-gradient(circle, var(--border) 1px, transparent 1px);
+        background-size: 32px 32px;
+        z-index: -1;
+        opacity: 0.5;
+      }
+
+      /* ─── Slide Type: Title ───────────────────────────────────────── */
+      .slide--title {
+        align-items: flex-start;
+        justify-content: center;
+      }
+
+      .slide--title .slide__display {
+        color: var(--text);
+        max-width: 14ch;
+      }
+
+      .slide--title .slide__display span {
+        color: var(--accent);
+      }
+
+      .slide--title .slide__body {
+        max-width: 48ch;
+        margin-top: 1.5em;
+      }
+
+      .slide--title .cursor {
+        display: inline-block;
+        width: 3px;
+        height: 0.85em;
+        background: var(--accent);
+        margin-left: 4px;
+        animation: blink 1s step-end infinite;
+        vertical-align: baseline;
+      }
+
+      @keyframes blink {
+        50% { opacity: 0; }
+      }
+
+      /* ─── Slide Type: Divider ─────────────────────────────────────── */
+      .slide--divider {
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        background: var(--surface);
+        border-top: 1px solid var(--border);
+        border-bottom: 1px solid var(--border);
+      }
+
+      .slide--divider .slide__label { color: var(--accent); }
+
+      .slide--divider .slide__number {
+        font-family: var(--font-mono);
+        font-size: clamp(200px, 30vw, 400px);
+        font-weight: 900;
+        line-height: 1;
+        color: var(--accent);
+        opacity: 0.04;
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        z-index: 0;
+        pointer-events: none;
+        user-select: none;
+      }
+
+      .slide--divider .slide__content {
+        position: relative;
+        z-index: 1;
+      }
+
+      .slide--divider .slide__heading {
+        color: var(--text);
+        margin-bottom: 0.3em;
+      }
+
+      .slide--divider .slide__body {
+        color: var(--text-dim);
+      }
+
+      /* ─── Slide Type: Content ─────────────────────────────────────── */
+      .slide--content .slide__inner {
+        display: grid;
+        grid-template-columns: 3fr 2fr;
+        gap: clamp(40px, 6vw, 80px);
+        align-items: center;
+        width: 100%;
+      }
+
+      .slide--content.layout-right .slide__inner {
+        grid-template-columns: 2fr 3fr;
+      }
+
+      .slide__bullets {
+        list-style: none;
+        margin-top: 1.5em;
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+      }
+
+      .slide__bullets li {
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        font-size: clamp(14px, 1.8vw, 20px);
+        line-height: 1.5;
+        color: var(--text);
+      }
+
+      .slide__bullets li::before {
+        content: ">";
+        flex-shrink: 0;
+        color: var(--accent);
+        font-weight: 700;
+        margin-top: 0;
+      }
+
+      .slide__aside {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        aspect-ratio: 4 / 3;
+        overflow: hidden;
+        padding: 24px;
+      }
+
+      /* ─── Slide Type: Dashboard ───────────────────────────────────── */
+      .slide--dashboard .slide__heading { margin-bottom: 1.5em; }
+
+      .slide__kpis {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(clamp(140px, 20vw, 220px), 1fr));
+        gap: clamp(12px, 2vw, 24px);
+      }
+
+      .slide__kpi {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: clamp(16px, 3vh, 32px) clamp(16px, 2vw, 24px);
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        transition: border-color 0.2s ease;
+      }
+
+      .slide__kpi:hover { border-color: var(--accent); }
+
+      .slide__kpi-label {
+        font-family: var(--font-mono);
+        font-size: clamp(9px, 1vw, 12px);
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 1.5px;
+        color: var(--text-dim);
+      }
+
+      .slide__kpi-val {
+        font-size: clamp(32px, 5vw, 64px);
+        font-weight: 700;
+        line-height: 1;
+        color: var(--accent);
+      }
+
+      .slide__kpi-trend {
+        font-family: var(--font-mono);
+        font-size: 13px;
+        margin-top: 4px;
+        color: var(--text-dim);
+      }
+
+      /* ─── Slide Type: Code ────────────────────────────────────────── */
+      .slide--code {
+        align-items: flex-start;
+        justify-content: center;
+      }
+
+      .slide__code-filename {
+        font-family: var(--font-mono);
+        font-size: 12px;
+        color: var(--accent);
+        margin-bottom: 8px;
+        letter-spacing: 1px;
+      }
+
+      .slide__code-block {
+        font-family: var(--font-mono);
+        font-size: clamp(14px, 1.5vw, 18px);
+        line-height: 1.6;
+        padding: clamp(16px, 3vw, 32px);
+        border-radius: 12px;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        overflow-x: auto;
+        white-space: pre;
+        tab-size: 2;
+        width: 100%;
+        max-width: 900px;
+      }
+
+      .slide__code-block .kw { color: var(--accent); }
+      .slide__code-block .str { color: var(--amber); }
+      .slide__code-block .cmt { color: var(--text-dim); font-style: italic; }
+      .slide__code-block .tag { color: #7ee787; }
+      .slide__code-block .attr { color: #79c0ff; }
+      .slide__code-block .val { color: var(--amber); }
+
+      /* ─── Slide Type: Quote ───────────────────────────────────────── */
+      .slide--quote {
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        background: var(--surface);
+      }
+
+      .slide--quote .slide__content {
+        max-width: 720px;
+        position: relative;
+      }
+
+      .slide__quote-mark {
+        font-family: var(--font-heading);
+        font-size: clamp(80px, 15vw, 160px);
+        font-weight: 800;
+        line-height: 0.8;
+        color: var(--accent);
+        opacity: 0.15;
+        display: block;
+        margin-bottom: -0.2em;
+        user-select: none;
+      }
+
+      .slide--quote .slide__body {
+        font-size: clamp(20px, 3.5vw, 36px);
+        font-weight: 500;
+        line-height: 1.4;
+        color: var(--text);
+        text-wrap: balance;
+      }
+
+      .slide__attribution {
+        margin-top: 1.5em;
+        font-family: var(--font-mono);
+        font-size: clamp(12px, 1.4vw, 16px);
+        font-weight: 600;
+        color: var(--accent);
+      }
+
+      /* ─── Slide Type: Split ───────────────────────────────────────── */
+      .slide--split {
+        padding: 0;
+        background: var(--bg);
+      }
+
+      .slide--split .slide__panels {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0;
+        width: 100%;
+        height: 100%;
+      }
+
+      .slide--split .slide__panel {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        padding: clamp(40px, 6vh, 80px) clamp(32px, 4vw, 64px);
+      }
+
+      .slide--split .slide__panel--primary {
+        background: var(--surface);
+        border-right: 1px solid var(--border);
+      }
+
+      .slide--split .slide__panel--secondary {
+        background: var(--bg);
+      }
+
+      .slide--split .slide__heading {
+        margin-bottom: 0.5em;
+      }
+
+      .slide--split .slide__panel .slide__bullets {
+        margin-top: 1em;
+      }
+
+      /* ─── Slide Type: Table ───────────────────────────────────────── */
+      .slide--table { background: var(--bg); }
+      .slide--table .slide__heading { margin-bottom: 1em; }
+
+      .table-wrap {
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        overflow: auto;
+      }
+
+      .data-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-variant-numeric: tabular-nums;
+      }
+
+      .data-table th {
+        font-family: var(--font-mono);
+        font-size: clamp(10px, 1.3vw, 14px);
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        color: var(--accent);
+        text-align: left;
+        padding: clamp(10px, 1.5vh, 16px) clamp(14px, 2vw, 24px);
+        border-bottom: 2px solid var(--border);
+        background: var(--surface);
+      }
+
+      .data-table td {
+        padding: clamp(10px, 1.5vh, 16px) clamp(14px, 2vw, 24px);
+        border-bottom: 1px solid var(--border);
+        font-size: clamp(14px, 1.8vw, 20px);
+        color: var(--text-dim);
+      }
+
+      .data-table td:first-child { color: var(--text); font-weight: 600; }
+
+      /* ─── Terminal Decoration ──────────────────────────────────────── */
+      .terminal-bar {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 12px 16px;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-bottom: none;
+        border-radius: 12px 12px 0 0;
+        font-size: 12px;
+        color: var(--text-dim);
+      }
+
+      .terminal-bar .dot {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+      }
+
+      .terminal-bar .dot--red { background: #ff5f57; }
+      .terminal-bar .dot--yellow { background: #febc2e; }
+      .terminal-bar .dot--green { background: #28c840; }
+
+      .terminal-bar + .slide__code-block {
+        border-radius: 0 0 12px 12px;
+        border-top: none;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="deck">
+
+      <!-- ── Slide 1: Title ─────────────────────────────────────────── -->
+      <section class="slide slide--title">
+        <div class="reveal">
+          <p class="slide__label">TECHNICAL OVERVIEW</p>
+        </div>
+        <div class="reveal">
+          <h1 class="slide__display">How <span>div.deck</span> Works<span class="cursor"></span></h1>
+        </div>
+        <div class="reveal">
+          <p class="slide__body">
+            Presentations as single HTML files. No build step. No framework. Just the browser.
+          </p>
+        </div>
+      </section>
+
+      <!-- ── Slide 2: Divider — The Philosophy ──────────────────────── -->
+      <section class="slide slide--divider">
+        <div class="slide__number">01</div>
+        <div class="slide__content">
+          <div class="reveal">
+            <p class="slide__label">Section</p>
+          </div>
+          <div class="reveal">
+            <h2 class="slide__heading">The Philosophy</h2>
+          </div>
+          <div class="reveal">
+            <p class="slide__body">Why one HTML file is all you need</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── Slide 3: Content — What Is DivDeck ─────────────────────── -->
+      <section class="slide slide--content">
+        <div class="slide__inner">
+          <div class="slide__text">
+            <div class="reveal">
+              <p class="slide__label">THE IDEA</p>
+            </div>
+            <div class="reveal">
+              <h2 class="slide__heading">One File, Zero Dependencies</h2>
+            </div>
+            <ul class="slide__bullets">
+              <li class="reveal">Each deck is a single .html file</li>
+              <li class="reveal">All CSS inline in a &lt;style&gt; block</li>
+              <li class="reveal">All JS inline in a &lt;script&gt; block</li>
+              <li class="reveal">No CDN, no npm, no bundler</li>
+              <li class="reveal">Works offline, works forever</li>
+            </ul>
+          </div>
+          <div class="slide__aside reveal">
+            <svg width="140" height="160" viewBox="0 0 140 160" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <rect x="10" y="10" width="120" height="140" rx="8" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
+              <text x="70" y="55" font-family="JetBrains Mono, monospace" font-size="11" font-weight="600" text-anchor="middle" fill="var(--accent)">&lt;html&gt;</text>
+              <rect x="30" y="68" width="80" height="16" rx="3" fill="var(--accent)" opacity="0.15"/>
+              <text x="70" y="80" font-family="JetBrains Mono, monospace" font-size="9" font-weight="500" text-anchor="middle" fill="var(--accent)">&lt;style&gt;</text>
+              <rect x="30" y="92" width="80" height="16" rx="3" fill="var(--amber)" opacity="0.15"/>
+              <text x="70" y="104" font-family="JetBrains Mono, monospace" font-size="9" font-weight="500" text-anchor="middle" fill="var(--amber)">&lt;slides&gt;</text>
+              <rect x="30" y="116" width="80" height="16" rx="3" fill="var(--text-dim)" opacity="0.2"/>
+              <text x="70" y="128" font-family="JetBrains Mono, monospace" font-size="9" font-weight="500" text-anchor="middle" fill="var(--text-dim)">&lt;script&gt;</text>
+            </svg>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── Slide 4: Quote ─────────────────────────────────────────── -->
+      <section class="slide slide--quote">
+        <div class="slide__content">
+          <div class="reveal">
+            <span class="slide__quote-mark">"</span>
+          </div>
+          <div class="reveal">
+            <p class="slide__body">
+              The best presentation tool is the one that gets out of your way.
+            </p>
+          </div>
+          <div class="reveal">
+            <p class="slide__attribution">-- div.deck philosophy</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── Slide 5: Divider — Architecture ────────────────────────── -->
+      <section class="slide slide--divider">
+        <div class="slide__number">02</div>
+        <div class="slide__content">
+          <div class="reveal">
+            <p class="slide__label">Section</p>
+          </div>
+          <div class="reveal">
+            <h2 class="slide__heading">Architecture</h2>
+          </div>
+          <div class="reveal">
+            <p class="slide__body">Three layers, one file</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── Slide 6: Split — The Three Layers ──────────────────────── -->
+      <section class="slide slide--split">
+        <div class="slide__panels">
+          <div class="slide__panel slide__panel--primary reveal">
+            <p class="slide__label">STRUCTURE</p>
+            <h2 class="slide__heading">Three Layers</h2>
+            <p class="slide__body">
+              Every deck is built from exactly three concerns, all embedded in a single HTML file.
+            </p>
+          </div>
+          <div class="slide__panel slide__panel--secondary">
+            <ul class="slide__bullets">
+              <li class="reveal"><strong style="color:var(--accent)">CSS</strong> &mdash; theme variables, layout rules, reveal animations</li>
+              <li class="reveal"><strong style="color:var(--amber)">HTML</strong> &mdash; semantic slide sections with typed classes</li>
+              <li class="reveal"><strong style="color:var(--text)">JS</strong> &mdash; the SlideEngine handles all navigation</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── Slide 7: Code — HTML Contract ──────────────────────────── -->
+      <section class="slide slide--code">
+        <div class="reveal">
+          <p class="slide__code-filename">THE HTML CONTRACT</p>
+        </div>
+        <div class="reveal">
+          <div class="terminal-bar">
+            <span class="dot dot--red"></span>
+            <span class="dot dot--yellow"></span>
+            <span class="dot dot--green"></span>
+            <span>deck.html</span>
+          </div>
+          <pre class="slide__code-block"><code><span class="tag">&lt;div</span> <span class="attr">class</span>=<span class="val">"deck"</span><span class="tag">&gt;</span>
+  <span class="tag">&lt;section</span> <span class="attr">class</span>=<span class="val">"slide slide--title"</span><span class="tag">&gt;</span>
+    <span class="tag">&lt;div</span> <span class="attr">class</span>=<span class="val">"reveal"</span><span class="tag">&gt;</span>...<span class="tag">&lt;/div&gt;</span>
+    <span class="tag">&lt;div</span> <span class="attr">class</span>=<span class="val">"reveal"</span><span class="tag">&gt;</span>...<span class="tag">&lt;/div&gt;</span>
+  <span class="tag">&lt;/section&gt;</span>
+  <span class="tag">&lt;section</span> <span class="attr">class</span>=<span class="val">"slide slide--content"</span><span class="tag">&gt;</span>
+    <span class="cmt">&lt;!-- next slide --&gt;</span>
+  <span class="tag">&lt;/section&gt;</span>
+<span class="tag">&lt;/div&gt;</span></code></pre>
+        </div>
+      </section>
+
+      <!-- ── Slide 8: Divider — Slide Types ─────────────────────────── -->
+      <section class="slide slide--divider">
+        <div class="slide__number">03</div>
+        <div class="slide__content">
+          <div class="reveal">
+            <p class="slide__label">Section</p>
+          </div>
+          <div class="reveal">
+            <h2 class="slide__heading">Slide Types</h2>
+          </div>
+          <div class="reveal">
+            <p class="slide__body">Built-in layouts for every need</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── Slide 9: Table — Slide Types Reference ─────────────────── -->
+      <section class="slide slide--table">
+        <div class="reveal">
+          <h2 class="slide__heading">Available Types</h2>
+        </div>
+        <div class="table-wrap reveal">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Type</th>
+                <th>Purpose</th>
+                <th>Layout</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>slide--title</td><td>Hero opening slide</td><td>Centered display text</td></tr>
+              <tr><td>slide--divider</td><td>Section breaks</td><td>Centered + bg number</td></tr>
+              <tr><td>slide--content</td><td>Text + aside</td><td>3fr / 2fr grid</td></tr>
+              <tr><td>slide--split</td><td>Two panels</td><td>1fr / 1fr grid</td></tr>
+              <tr><td>slide--dashboard</td><td>KPI metrics</td><td>Auto-fit card grid</td></tr>
+              <tr><td>slide--code</td><td>Code snippets</td><td>Centered pre block</td></tr>
+              <tr><td>slide--quote</td><td>Pull quotes</td><td>Centered blockquote</td></tr>
+              <tr><td>slide--table</td><td>Data tables</td><td>Full-width table</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ── Slide 10: Content — Choosing Types ─────────────────────── -->
+      <section class="slide slide--content layout-right">
+        <div class="slide__inner">
+          <div class="slide__aside reveal">
+            <svg width="160" height="120" viewBox="0 0 160 120" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <rect x="5" y="5" width="70" height="50" rx="4" fill="var(--accent)" opacity="0.12" stroke="var(--accent)" stroke-width="1"/>
+              <text x="40" y="34" font-family="JetBrains Mono, monospace" font-size="8" text-anchor="middle" fill="var(--accent)">title</text>
+              <rect x="85" y="5" width="70" height="50" rx="4" fill="var(--amber)" opacity="0.12" stroke="var(--amber)" stroke-width="1"/>
+              <text x="120" y="34" font-family="JetBrains Mono, monospace" font-size="8" text-anchor="middle" fill="var(--amber)">content</text>
+              <rect x="5" y="65" width="70" height="50" rx="4" fill="var(--text-dim)" opacity="0.15" stroke="var(--text-dim)" stroke-width="1"/>
+              <text x="40" y="94" font-family="JetBrains Mono, monospace" font-size="8" text-anchor="middle" fill="var(--text-dim)">code</text>
+              <rect x="85" y="65" width="70" height="50" rx="4" fill="var(--accent)" opacity="0.08" stroke="var(--accent)" stroke-width="1" stroke-dasharray="4 2"/>
+              <text x="120" y="94" font-family="JetBrains Mono, monospace" font-size="8" text-anchor="middle" fill="var(--text-dim)">quote</text>
+            </svg>
+          </div>
+          <div class="slide__text">
+            <div class="reveal">
+              <p class="slide__label">COMPOSITION</p>
+            </div>
+            <div class="reveal">
+              <h2 class="slide__heading">Mix Types for Variety</h2>
+            </div>
+            <ul class="slide__bullets">
+              <li class="reveal">Alternate spatial compositions</li>
+              <li class="reveal">Never repeat the same layout 3x in a row</li>
+              <li class="reveal">Use dividers to create rhythm</li>
+              <li class="reveal">Let the content dictate the type</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── Slide 11: Divider — Reveal System ──────────────────────── -->
+      <section class="slide slide--divider">
+        <div class="slide__number">04</div>
+        <div class="slide__content">
+          <div class="reveal">
+            <p class="slide__label">Section</p>
+          </div>
+          <div class="reveal">
+            <h2 class="slide__heading">Reveal Animations</h2>
+          </div>
+          <div class="reveal">
+            <p class="slide__body">Staggered entrance with zero JavaScript</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── Slide 12: Code — Reveal System ─────────────────────────── -->
+      <section class="slide slide--code">
+        <div class="reveal">
+          <p class="slide__code-filename">THE .reveal CLASS</p>
+        </div>
+        <div class="reveal">
+          <div class="terminal-bar">
+            <span class="dot dot--red"></span>
+            <span class="dot dot--yellow"></span>
+            <span class="dot dot--green"></span>
+            <span>style.css</span>
+          </div>
+          <pre class="slide__code-block"><code><span class="kw">.slide .reveal</span> {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.5s, transform 0.5s;
+}
+<span class="kw">.slide.visible .reveal</span> {
+  opacity: 1;
+  transform: none;
+}
+<span class="cmt">/* stagger via nth-child delays */</span>
+<span class="kw">.slide.visible .reveal:nth-child(2)</span> {
+  transition-delay: 0.2s;
+}</code></pre>
+        </div>
+      </section>
+
+      <!-- ── Slide 13: Content — How Reveals Work ───────────────────── -->
+      <section class="slide slide--content">
+        <div class="slide__inner">
+          <div class="slide__text">
+            <div class="reveal">
+              <p class="slide__label">MECHANISM</p>
+            </div>
+            <div class="reveal">
+              <h2 class="slide__heading">Pure CSS Staggering</h2>
+            </div>
+            <ul class="slide__bullets">
+              <li class="reveal">Wrap each element in a .reveal div</li>
+              <li class="reveal">IntersectionObserver adds .visible to the slide</li>
+              <li class="reveal">CSS nth-child rules stagger the delay</li>
+              <li class="reveal">Elements fade up in sequence automatically</li>
+              <li class="reveal">Respects prefers-reduced-motion</li>
+            </ul>
+          </div>
+          <div class="slide__aside reveal">
+            <svg width="140" height="120" viewBox="0 0 140 120" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <rect x="10" y="10" width="120" height="20" rx="4" fill="var(--accent)" opacity="0.8"/>
+              <rect x="10" y="40" width="120" height="20" rx="4" fill="var(--accent)" opacity="0.5"/>
+              <rect x="10" y="70" width="120" height="20" rx="4" fill="var(--accent)" opacity="0.25"/>
+              <rect x="10" y="100" width="120" height="20" rx="4" fill="var(--accent)" opacity="0.1"/>
+              <text x="70" y="24" font-family="JetBrains Mono, monospace" font-size="9" text-anchor="middle" fill="var(--bg)">0.1s</text>
+              <text x="70" y="54" font-family="JetBrains Mono, monospace" font-size="9" text-anchor="middle" fill="var(--bg)">0.2s</text>
+              <text x="70" y="84" font-family="JetBrains Mono, monospace" font-size="9" text-anchor="middle" fill="var(--text)">0.3s</text>
+              <text x="70" y="114" font-family="JetBrains Mono, monospace" font-size="9" text-anchor="middle" fill="var(--text)">0.4s</text>
+            </svg>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── Slide 14: Divider — SlideEngine ────────────────────────── -->
+      <section class="slide slide--divider">
+        <div class="slide__number">05</div>
+        <div class="slide__content">
+          <div class="reveal">
+            <p class="slide__label">Section</p>
+          </div>
+          <div class="reveal">
+            <h2 class="slide__heading">The SlideEngine</h2>
+          </div>
+          <div class="reveal">
+            <p class="slide__body">Navigation, scroll-spy, and chrome in ~80 lines</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── Slide 15: Dashboard — SlideEngine Features ─────────────── -->
+      <section class="slide slide--dashboard">
+        <div class="reveal">
+          <h2 class="slide__heading">What SlideEngine Handles</h2>
+        </div>
+        <div class="slide__kpis">
+          <div class="slide__kpi reveal">
+            <span class="slide__kpi-val">Scroll</span>
+            <span class="slide__kpi-label">SNAP NAVIGATION</span>
+            <span class="slide__kpi-trend">CSS scroll-snap + smooth scroll</span>
+          </div>
+          <div class="slide__kpi reveal">
+            <span class="slide__kpi-val">Keys</span>
+            <span class="slide__kpi-label">KEYBOARD INPUT</span>
+            <span class="slide__kpi-trend">Arrows, space, PgUp/Down, Home/End</span>
+          </div>
+          <div class="slide__kpi reveal">
+            <span class="slide__kpi-val">Touch</span>
+            <span class="slide__kpi-label">SWIPE SUPPORT</span>
+            <span class="slide__kpi-trend">Vertical swipe > 50px threshold</span>
+          </div>
+          <div class="slide__kpi reveal">
+            <span class="slide__kpi-val">Chrome</span>
+            <span class="slide__kpi-label">UI ELEMENTS</span>
+            <span class="slide__kpi-trend">Progress bar, dots, counter, hints</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── Slide 16: Code — SlideEngine Init ──────────────────────── -->
+      <section class="slide slide--code">
+        <div class="reveal">
+          <p class="slide__code-filename">SLIDEENGINE INITIALIZATION</p>
+        </div>
+        <div class="reveal">
+          <div class="terminal-bar">
+            <span class="dot dot--red"></span>
+            <span class="dot dot--yellow"></span>
+            <span class="dot dot--green"></span>
+            <span>engine.js</span>
+          </div>
+          <pre class="slide__code-block"><code><span class="kw">function</span> SlideEngine() {
+  <span class="kw">this</span>.deck = document.querySelector(<span class="str">".deck"</span>);
+  <span class="kw">this</span>.slides = [].slice.call(
+    document.querySelectorAll(<span class="str">".slide"</span>)
+  );
+  <span class="kw">this</span>.buildChrome(); <span class="cmt">// progress, dots, counter</span>
+  <span class="kw">this</span>.bindEvents(); <span class="cmt">// keyboard + touch</span>
+  <span class="kw">this</span>.observe();     <span class="cmt">// IntersectionObserver</span>
+  <span class="kw">this</span>.update();      <span class="cmt">// sync chrome state</span>
+}
+<span class="kw">new</span> SlideEngine();</code></pre>
+        </div>
+      </section>
+
+      <!-- ── Slide 17: Content — IntersectionObserver ───────────────── -->
+      <section class="slide slide--content layout-right">
+        <div class="slide__inner">
+          <div class="slide__aside reveal">
+            <svg width="140" height="120" viewBox="0 0 140 120" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <rect x="10" y="5" width="120" height="30" rx="4" fill="var(--border)" stroke="var(--border)" stroke-width="1"/>
+              <text x="70" y="24" font-family="JetBrains Mono, monospace" font-size="9" text-anchor="middle" fill="var(--text-dim)">slide 1</text>
+              <rect x="10" y="42" width="120" height="36" rx="4" fill="var(--accent)" opacity="0.2" stroke="var(--accent)" stroke-width="2"/>
+              <text x="70" y="64" font-family="JetBrains Mono, monospace" font-size="9" text-anchor="middle" fill="var(--accent)">slide 2 .visible</text>
+              <rect x="10" y="85" width="120" height="30" rx="4" fill="var(--border)" stroke="var(--border)" stroke-width="1"/>
+              <text x="70" y="104" font-family="JetBrains Mono, monospace" font-size="9" text-anchor="middle" fill="var(--text-dim)">slide 3</text>
+              <line x1="0" y1="35" x2="140" y2="35" stroke="var(--amber)" stroke-width="1" stroke-dasharray="4 2"/>
+              <line x1="0" y1="82" x2="140" y2="82" stroke="var(--amber)" stroke-width="1" stroke-dasharray="4 2"/>
+              <text x="140" y="60" font-family="JetBrains Mono, monospace" font-size="7" text-anchor="end" fill="var(--amber)">viewport</text>
+            </svg>
+          </div>
+          <div class="slide__text">
+            <div class="reveal">
+              <p class="slide__label">SCROLL SPY</p>
+            </div>
+            <div class="reveal">
+              <h2 class="slide__heading">IntersectionObserver</h2>
+            </div>
+            <ul class="slide__bullets">
+              <li class="reveal">Watches each .slide element</li>
+              <li class="reveal">50% visibility threshold triggers .visible</li>
+              <li class="reveal">Updates progress bar and dot indicator</li>
+              <li class="reveal">No scroll event listeners needed</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── Slide 18: Divider — Navigation ─────────────────────────── -->
+      <section class="slide slide--divider">
+        <div class="slide__number">06</div>
+        <div class="slide__content">
+          <div class="reveal">
+            <p class="slide__label">Section</p>
+          </div>
+          <div class="reveal">
+            <h2 class="slide__heading">Navigation Chrome</h2>
+          </div>
+          <div class="reveal">
+            <p class="slide__body">Auto-generated UI that stays out of your way</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── Slide 19: Split — Chrome Elements ──────────────────────── -->
+      <section class="slide slide--split">
+        <div class="slide__panels">
+          <div class="slide__panel slide__panel--primary reveal">
+            <p class="slide__label">TOP</p>
+            <h2 class="slide__heading">Progress Bar</h2>
+            <p class="slide__body">
+              A 3px accent-colored bar at the top of the viewport. Width maps to current position as a percentage of total slides.
+            </p>
+          </div>
+          <div class="slide__panel slide__panel--secondary">
+            <div class="reveal">
+              <p class="slide__label">RIGHT</p>
+              <h2 class="slide__heading">Dot Navigator</h2>
+              <p class="slide__body" style="margin-top: 0.5em;">
+                Clickable dots vertically centered on the right edge. Active dot scales up and takes the accent color. Frosted glass background.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── Slide 20: Content — Counter & Hints ────────────────────── -->
+      <section class="slide slide--content">
+        <div class="slide__inner">
+          <div class="slide__text">
+            <div class="reveal">
+              <p class="slide__label">BOTTOM BAR</p>
+            </div>
+            <div class="reveal">
+              <h2 class="slide__heading">Counter & Hints</h2>
+            </div>
+            <ul class="slide__bullets">
+              <li class="reveal">Slide counter in bottom-right corner</li>
+              <li class="reveal">Keyboard hints centered at bottom</li>
+              <li class="reveal">Hints auto-fade after 4 seconds</li>
+              <li class="reveal">All chrome is generated by SlideEngine</li>
+              <li class="reveal">Nothing to add to your HTML manually</li>
+            </ul>
+          </div>
+          <div class="slide__aside reveal">
+            <svg width="160" height="100" viewBox="0 0 160 100" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <rect x="5" y="5" width="150" height="90" rx="6" fill="var(--bg)" stroke="var(--border)" stroke-width="1"/>
+              <rect x="5" y="5" width="75" height="3" rx="1" fill="var(--accent)"/>
+              <circle cx="148" cy="30" r="4" fill="var(--accent)" opacity="0.8"/>
+              <circle cx="148" cy="42" r="3" fill="var(--text-dim)" opacity="0.3"/>
+              <circle cx="148" cy="52" r="3" fill="var(--text-dim)" opacity="0.3"/>
+              <circle cx="148" cy="62" r="3" fill="var(--text-dim)" opacity="0.3"/>
+              <text x="135" y="90" font-family="JetBrains Mono, monospace" font-size="7" text-anchor="end" fill="var(--text-dim)">3 / 6</text>
+              <text x="80" y="90" font-family="JetBrains Mono, monospace" font-size="6" text-anchor="middle" fill="var(--text-dim)" opacity="0.5">arrows or scroll</text>
+            </svg>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── Slide 21: Divider — The Editor ─────────────────────────── -->
+      <section class="slide slide--divider">
+        <div class="slide__number">07</div>
+        <div class="slide__content">
+          <div class="reveal">
+            <p class="slide__label">Section</p>
+          </div>
+          <div class="reveal">
+            <h2 class="slide__heading">The div.deck Editor</h2>
+          </div>
+          <div class="reveal">
+            <p class="slide__body">Live editing meets presentation mode</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── Slide 22: Content — Editor Features ────────────────────── -->
+      <section class="slide slide--content">
+        <div class="slide__inner">
+          <div class="slide__text">
+            <div class="reveal">
+              <p class="slide__label">WORKFLOW</p>
+            </div>
+            <div class="reveal">
+              <h2 class="slide__heading">Edit in Place</h2>
+            </div>
+            <ul class="slide__bullets">
+              <li class="reveal">Run npx div-deck ./presentations</li>
+              <li class="reveal">Local dev server on port 3001</li>
+              <li class="reveal">Edit HTML directly, see changes live</li>
+              <li class="reveal">Present from the same browser tab</li>
+              <li class="reveal">No compile step between edits</li>
+            </ul>
+          </div>
+          <div class="slide__aside reveal">
+            <svg width="160" height="100" viewBox="0 0 160 100" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <rect x="5" y="5" width="150" height="20" rx="4" fill="var(--surface)" stroke="var(--border)" stroke-width="1"/>
+              <circle cx="16" cy="15" r="3" fill="#ff5f57"/>
+              <circle cx="26" cy="15" r="3" fill="#febc2e"/>
+              <circle cx="36" cy="15" r="3" fill="#28c840"/>
+              <text x="80" y="18" font-family="JetBrains Mono, monospace" font-size="7" text-anchor="middle" fill="var(--text-dim)">localhost:3001</text>
+              <rect x="5" y="28" width="150" height="67" rx="0 0 4 4" fill="var(--bg)" stroke="var(--border)" stroke-width="1"/>
+              <rect x="12" y="35" width="60" height="6" rx="2" fill="var(--accent)" opacity="0.3"/>
+              <rect x="12" y="47" width="90" height="4" rx="2" fill="var(--text-dim)" opacity="0.2"/>
+              <rect x="12" y="55" width="75" height="4" rx="2" fill="var(--text-dim)" opacity="0.2"/>
+              <rect x="12" y="63" width="85" height="4" rx="2" fill="var(--text-dim)" opacity="0.2"/>
+              <rect x="12" y="75" width="40" height="12" rx="3" fill="var(--accent)" opacity="0.15" stroke="var(--accent)" stroke-width="1"/>
+              <text x="32" y="84" font-family="JetBrains Mono, monospace" font-size="7" text-anchor="middle" fill="var(--accent)">LIVE</text>
+            </svg>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── Slide 23: Dashboard — Creating a Deck ──────────────────── -->
+      <section class="slide slide--dashboard">
+        <div class="reveal">
+          <h2 class="slide__heading">Creating a Deck</h2>
+        </div>
+        <div class="slide__kpis">
+          <div class="slide__kpi reveal">
+            <span class="slide__kpi-val">01</span>
+            <span class="slide__kpi-label">STRUCTURE</span>
+            <span class="slide__kpi-trend">Write .deck > .slide sections</span>
+          </div>
+          <div class="slide__kpi reveal">
+            <span class="slide__kpi-val">02</span>
+            <span class="slide__kpi-label">THEME</span>
+            <span class="slide__kpi-trend">Set CSS custom properties</span>
+          </div>
+          <div class="slide__kpi reveal">
+            <span class="slide__kpi-val">03</span>
+            <span class="slide__kpi-label">ANIMATE</span>
+            <span class="slide__kpi-trend">Wrap elements in .reveal divs</span>
+          </div>
+          <div class="slide__kpi reveal">
+            <span class="slide__kpi-val">04</span>
+            <span class="slide__kpi-label">PRESENT</span>
+            <span class="slide__kpi-trend">Open in any browser</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── Slide 24: Quote — Closing ──────────────────────────────── -->
+      <section class="slide slide--quote">
+        <div class="slide__content">
+          <div class="reveal">
+            <span class="slide__quote-mark">"</span>
+          </div>
+          <div class="reveal">
+            <p class="slide__body">
+              Ship a single HTML file. Present it anywhere. Edit it forever.
+            </p>
+          </div>
+          <div class="reveal">
+            <p class="slide__attribution">-- that's div.deck</p>
+          </div>
+        </div>
+      </section>
+
+    </div>
+    <!-- /.deck -->
+
+    <script>
+      function SlideEngine() {
+        this.deck = document.querySelector(".deck");
+        this.slides = [].slice.call(document.querySelectorAll(".slide"));
+        this.current = 0;
+        this.total = this.slides.length;
+        this.buildChrome();
+        this.bindEvents();
+        this.observe();
+        this.update();
+      }
+
+      SlideEngine.prototype.buildChrome = function () {
+        var bar = document.createElement("div");
+        bar.className = "deck-progress";
+        document.body.appendChild(bar);
+        this.bar = bar;
+
+        var dots = document.createElement("div");
+        dots.className = "deck-dots";
+        var self = this;
+        this.slides.forEach(function (_, i) {
+          var d = document.createElement("button");
+          d.className = "deck-dot";
+          d.title = "Slide " + (i + 1);
+          d.onclick = function () {
+            self.goTo(i);
+          };
+          dots.appendChild(d);
+        });
+        document.body.appendChild(dots);
+        this.dots = [].slice.call(dots.children);
+
+        var ctr = document.createElement("div");
+        ctr.className = "deck-counter";
+        document.body.appendChild(ctr);
+        this.counter = ctr;
+
+        var hints = document.createElement("div");
+        hints.className = "deck-hints";
+        hints.textContent = "\u2190 \u2192 or scroll to navigate";
+        document.body.appendChild(hints);
+        this.hints = hints;
+        this.hintTimer = setTimeout(function () {
+          hints.classList.add("faded");
+        }, 4000);
+      };
+
+      SlideEngine.prototype.bindEvents = function () {
+        var self = this;
+        document.addEventListener("keydown", function (e) {
+          if (
+            e.target.closest(
+              ".mermaid-wrap,.table-scroll,.code-scroll,input,textarea,[contenteditable]",
+            )
+          )
+            return;
+          if (["ArrowDown", "ArrowRight", " ", "PageDown"].indexOf(e.key) > -1) {
+            e.preventDefault();
+            self.next();
+          } else if (["ArrowUp", "ArrowLeft", "PageUp"].indexOf(e.key) > -1) {
+            e.preventDefault();
+            self.prev();
+          } else if (e.key === "Home") {
+            e.preventDefault();
+            self.goTo(0);
+          } else if (e.key === "End") {
+            e.preventDefault();
+            self.goTo(self.total - 1);
+          }
+          self.fadeHints();
+        });
+        var tY;
+        this.deck.addEventListener(
+          "touchstart",
+          function (e) {
+            tY = e.touches[0].clientY;
+          },
+          { passive: true },
+        );
+        this.deck.addEventListener("touchend", function (e) {
+          var dy = tY - e.changedTouches[0].clientY;
+          if (Math.abs(dy) > 50) {
+            dy > 0 ? self.next() : self.prev();
+          }
+        });
+      };
+
+      SlideEngine.prototype.observe = function () {
+        var self = this;
+        var obs = new IntersectionObserver(
+          function (entries) {
+            entries.forEach(function (entry) {
+              if (entry.isIntersecting) {
+                entry.target.classList.add("visible");
+                self.current = self.slides.indexOf(entry.target);
+                self.update();
+              }
+            });
+          },
+          { threshold: 0.5 },
+        );
+        this.slides.forEach(function (s) {
+          obs.observe(s);
+        });
+      };
+
+      SlideEngine.prototype.goTo = function (i) {
+        this.slides[Math.max(0, Math.min(i, this.total - 1))].scrollIntoView({
+          behavior: "smooth",
+        });
+      };
+      SlideEngine.prototype.next = function () {
+        if (this.current < this.total - 1) this.goTo(this.current + 1);
+      };
+      SlideEngine.prototype.prev = function () {
+        if (this.current > 0) this.goTo(this.current - 1);
+      };
+      SlideEngine.prototype.update = function () {
+        this.bar.style.width = ((this.current + 1) / this.total) * 100 + "%";
+        var c = this.current;
+        this.dots.forEach(function (d, i) {
+          d.classList.toggle("active", i === c);
+        });
+        this.counter.textContent = this.current + 1 + " / " + this.total;
+      };
+      SlideEngine.prototype.fadeHints = function () {
+        clearTimeout(this.hintTimer);
+        this.hints.classList.add("faded");
+      };
+
+      new SlideEngine();
+    </script>
+  </body>
+</html>
