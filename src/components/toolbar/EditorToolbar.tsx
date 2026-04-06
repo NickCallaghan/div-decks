@@ -1,8 +1,14 @@
-import { useCallback, useEffect } from "react";
+import { useCallback } from "react";
 import { useEditorStore } from "../../store/editor-store";
 import { usePresentation } from "../../hooks/usePresentation";
 import { useGitStatus } from "../../hooks/useGitStatus";
+import { useToast } from "../../hooks/useToast";
 import { exportPdf } from "../../lib/export-pdf";
+import { useKeyboardShortcuts } from "../../hooks/useKeyboardShortcuts";
+import { Separator, ToolbarButton } from "./shared";
+import { GitStatusBadge } from "./GitStatusBadge";
+import { SlideNavigation } from "./SlideNavigation";
+import { SelectedElementIndicator } from "./SelectedElementIndicator";
 
 interface EditorToolbarProps {
   onPlay?: () => void;
@@ -20,6 +26,7 @@ export function EditorToolbar({ onPlay }: EditorToolbarProps) {
   const redo = useEditorStore((s) => s.redo);
   const { save, open } = usePresentation();
   const gitStatus = useGitStatus();
+  const toast = useToast();
 
   const sendCommand = useCallback(
     (command: { type: string; [key: string]: unknown }) => {
@@ -36,10 +43,11 @@ export function EditorToolbar({ onPlay }: EditorToolbarProps) {
   const handleSave = useCallback(async () => {
     try {
       await save();
-    } catch (err) {
-      console.error("Save failed:", err);
+      toast.success("Saved");
+    } catch {
+      toast.error("Save failed");
     }
-  }, [save]);
+  }, [save, toast]);
 
   const handleReload = useCallback(async () => {
     if (!presentation) return;
@@ -48,8 +56,12 @@ export function EditorToolbar({ onPlay }: EditorToolbarProps) {
       !window.confirm("You have unsaved changes. Reload from disk?")
     )
       return;
-    await open(presentation.filename);
-  }, [presentation, isDirty, open]);
+    try {
+      await open(presentation.filename);
+    } catch {
+      toast.error("Failed to reload file");
+    }
+  }, [presentation, isDirty, open, toast]);
 
   const handleDelete = useCallback(() => {
     if (!selectedElement) return;
@@ -64,63 +76,7 @@ export function EditorToolbar({ onPlay }: EditorToolbarProps) {
     if (presentation) exportPdf(presentation);
   }, [presentation]);
 
-  // Keyboard shortcuts
-  useEffect(() => {
-    function handleKeyDown(e: KeyboardEvent) {
-      const mod = e.metaKey || e.ctrlKey;
-      if (mod && e.key === "s") {
-        e.preventDefault();
-        handleSave();
-      }
-      if (mod && e.key === "z" && !e.shiftKey) {
-        e.preventDefault();
-        undo();
-      }
-      if (mod && e.key === "z" && e.shiftKey) {
-        e.preventDefault();
-        redo();
-      }
-      if (mod && e.key === "y") {
-        e.preventDefault();
-        redo();
-      }
-      if (mod && e.key === "p") {
-        e.preventDefault();
-        handleExportPdf();
-      }
-      // Arrow keys to navigate slides (only when not editing text)
-      if (!mod && (e.key === "ArrowLeft" || e.key === "ArrowRight")) {
-        const isEditing =
-          document.activeElement?.closest("iframe") &&
-          (e.target as HTMLElement).closest?.("[contenteditable]");
-        if (!isEditing) {
-          e.preventDefault();
-          const total =
-            useEditorStore.getState().presentation?.slides.length ?? 0;
-          const current = useEditorStore.getState().activeSlideIndex;
-          if (e.key === "ArrowLeft" && current > 0) {
-            useEditorStore.getState().setActiveSlideIndex(current - 1);
-          } else if (e.key === "ArrowRight" && current < total - 1) {
-            useEditorStore.getState().setActiveSlideIndex(current + 1);
-          }
-        }
-      }
-      if (e.key === "Delete" || e.key === "Backspace") {
-        if (
-          selectedElement &&
-          !(e.target as HTMLElement).closest("[contenteditable]")
-        ) {
-          e.preventDefault();
-          handleDelete();
-        }
-      }
-      if (e.key === "Escape") {
-        handleDeselect();
-      }
-    }
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [
+  useKeyboardShortcuts({
     handleSave,
     handleDelete,
     handleDeselect,
@@ -128,7 +84,7 @@ export function EditorToolbar({ onPlay }: EditorToolbarProps) {
     selectedElement,
     undo,
     redo,
-  ]);
+  });
 
   const totalSlides = presentation?.slides.length ?? 0;
 
@@ -179,59 +135,7 @@ export function EditorToolbar({ onPlay }: EditorToolbarProps) {
           </span>
 
           {/* Git status */}
-          {gitStatus?.available && (
-            <>
-              <Separator />
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 6,
-                  fontSize: 12,
-                }}
-              >
-                <span
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 4,
-                    color: "var(--color-gray-500)",
-                  }}
-                >
-                  <svg
-                    width="14"
-                    height="14"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <line x1="6" y1="3" x2="6" y2="15" />
-                    <circle cx="18" cy="6" r="3" />
-                    <circle cx="6" cy="18" r="3" />
-                    <path d="M18 9a9 9 0 0 1-9 9" />
-                  </svg>
-                  {gitStatus.branch ?? "detached"}
-                </span>
-                {gitStatus.fileStatus && (
-                  <span
-                    style={{
-                      padding: "1px 8px",
-                      borderRadius: 10,
-                      fontSize: 11,
-                      fontWeight: 500,
-                      background: gitStatusBg(gitStatus.fileStatus),
-                      color: gitStatusColor(gitStatus.fileStatus),
-                    }}
-                  >
-                    {gitStatus.fileStatus}
-                  </span>
-                )}
-              </div>
-            </>
-          )}
+          {gitStatus && <GitStatusBadge gitStatus={gitStatus} />}
 
           <div style={{ flex: 1 }} />
 
@@ -290,98 +194,27 @@ export function EditorToolbar({ onPlay }: EditorToolbarProps) {
           <Separator />
 
           {/* Navigation */}
-          <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-            <ToolbarButton
-              onClick={() =>
-                setActiveSlideIndex(Math.max(0, activeSlideIndex - 1))
-              }
-              disabled={activeSlideIndex === 0}
-              title="Previous slide"
-            >
-              <svg
-                width="16"
-                height="16"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-              >
-                <polyline points="15 18 9 12 15 6" />
-              </svg>
-            </ToolbarButton>
-            <span
-              style={{
-                fontSize: 12,
-                color: "var(--color-gray-500)",
-                fontVariantNumeric: "tabular-nums",
-                minWidth: 48,
-                textAlign: "center",
-              }}
-            >
-              {activeSlideIndex + 1} / {totalSlides}
-            </span>
-            <ToolbarButton
-              onClick={() =>
-                setActiveSlideIndex(
-                  Math.min(totalSlides - 1, activeSlideIndex + 1),
-                )
-              }
-              disabled={activeSlideIndex >= totalSlides - 1}
-              title="Next slide"
-            >
-              <svg
-                width="16"
-                height="16"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-              >
-                <polyline points="9 18 15 12 9 6" />
-              </svg>
-            </ToolbarButton>
-          </div>
+          <SlideNavigation
+            activeSlideIndex={activeSlideIndex}
+            totalSlides={totalSlides}
+            onPrev={() =>
+              setActiveSlideIndex(Math.max(0, activeSlideIndex - 1))
+            }
+            onNext={() =>
+              setActiveSlideIndex(
+                Math.min(totalSlides - 1, activeSlideIndex + 1),
+              )
+            }
+          />
 
           <Separator />
 
           {/* Selected element indicator */}
           {selectedElement && (
-            <>
-              <span
-                style={{
-                  fontSize: 11,
-                  color: "var(--color-blue-500)",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 4,
-                }}
-              >
-                <span
-                  style={{
-                    padding: "2px 6px",
-                    background: "var(--color-blue-50)",
-                    borderRadius: 4,
-                    fontFamily: "monospace",
-                  }}
-                >
-                  &lt;{selectedElement.tagName.toLowerCase()}&gt;
-                </span>
-              </span>
-              <ToolbarButton onClick={handleDeselect} title="Deselect (Esc)">
-                <svg
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                >
-                  <line x1="18" y1="6" x2="6" y2="18" />
-                  <line x1="6" y1="6" x2="18" y2="18" />
-                </svg>
-              </ToolbarButton>
-              <Separator />
-            </>
+            <SelectedElementIndicator
+              tagName={selectedElement.tagName}
+              onDeselect={handleDeselect}
+            />
           )}
 
           {/* Play */}
@@ -445,93 +278,5 @@ export function EditorToolbar({ onPlay }: EditorToolbarProps) {
         </>
       )}
     </div>
-  );
-}
-
-function gitStatusColor(status: string): string {
-  switch (status) {
-    case "clean":
-    case "added":
-      return "var(--color-green-700)";
-    case "modified":
-      return "var(--color-amber-700)";
-    case "staged":
-      return "var(--color-blue-700)";
-    case "untracked":
-      return "var(--color-gray-500)";
-    default:
-      return "var(--color-gray-500)";
-  }
-}
-
-function gitStatusBg(status: string): string {
-  switch (status) {
-    case "clean":
-    case "added":
-      return "var(--color-green-50)";
-    case "modified":
-      return "var(--color-amber-50)";
-    case "staged":
-      return "var(--color-blue-50)";
-    case "untracked":
-      return "var(--color-gray-50)";
-    default:
-      return "var(--color-gray-50)";
-  }
-}
-
-function Separator() {
-  return (
-    <div
-      style={{
-        width: 1,
-        height: 24,
-        background: "var(--color-gray-200)",
-        margin: "0 6px",
-        flexShrink: 0,
-      }}
-    />
-  );
-}
-
-function ToolbarButton({
-  children,
-  onClick,
-  disabled,
-  title,
-  danger,
-}: {
-  children: React.ReactNode;
-  onClick: () => void;
-  disabled?: boolean;
-  title: string;
-  danger?: boolean;
-}) {
-  return (
-    <button
-      onClick={onClick}
-      disabled={disabled}
-      title={title}
-      style={{
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        width: 30,
-        height: 30,
-        border: "none",
-        background: "transparent",
-        borderRadius: 6,
-        cursor: disabled ? "default" : "pointer",
-        color: disabled
-          ? "var(--color-gray-300)"
-          : danger
-            ? "var(--color-red-500)"
-            : "var(--color-gray-600)",
-        transition: "background 0.15s, color 0.15s",
-        flexShrink: 0,
-      }}
-    >
-      {children}
-    </button>
   );
 }

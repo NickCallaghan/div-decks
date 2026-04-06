@@ -6,6 +6,8 @@ import { EditorToolbar } from "./components/toolbar/EditorToolbar";
 import { StatusBar } from "./components/layout/StatusBar";
 import { ShortcutHints } from "./components/layout/ShortcutHints";
 import { PresentationMode } from "./components/layout/PresentationMode";
+import { ToastContainer } from "./components/layout/ToastContainer";
+import { useToastStore } from "./store/toast-store";
 import { useEditorStore } from "./store/editor-store";
 import { usePresentation } from "./hooks/usePresentation";
 
@@ -24,6 +26,9 @@ export default function App() {
     if (savedFile && !useEditorStore.getState().presentation) {
       open(savedFile).catch(() => {
         sessionStorage.removeItem("activeFile");
+        useToastStore
+          .getState()
+          .addToast("error", "Failed to reopen last file");
       });
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
@@ -101,6 +106,7 @@ export default function App() {
       </div>
 
       <StatusBar />
+      <ToastContainer />
 
       {showShortcuts && (
         <ShortcutHints onClose={() => setShowShortcuts(false)} />

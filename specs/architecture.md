@@ -137,7 +137,9 @@ div.deck/
 │   ├── App.tsx                     # Root layout + presentation mode
 │   ├── api/presentations.ts        # Fetch wrappers
 │   ├── api/git.ts                  # Git status fetch wrapper
-│   ├── store/editor-store.ts       # Zustand store (selection, undo/redo, dirty state)
+│   ├── store/
+│   │   ├── editor-store.ts         # Zustand store (selection, undo/redo, dirty state)
+│   │   └── toast-store.ts          # Toast notification store (success/error/info)
 │   ├── lib/
 │   │   ├── parser.ts               # HTML → PresentationModel
 │   │   ├── serializer.ts           # PresentationModel → HTML
@@ -146,21 +148,30 @@ div.deck/
 │   ├── hooks/
 │   │   ├── usePresentation.ts      # open/save coordination
 │   │   ├── usePresentationList.ts  # file listing
-│   │   └── useGitStatus.ts        # Git branch + file status polling
+│   │   ├── useGitStatus.ts        # Git branch + file status polling
+│   │   ├── useToast.ts            # Toast convenience hook
+│   │   └── useKeyboardShortcuts.ts # Global keyboard shortcuts
 │   ├── components/
 │   │   ├── editor/
 │   │   │   ├── EditorCanvas.tsx    # Active slide container
-│   │   │   └── SlideRenderer.tsx   # Iframe srcdoc builder + postMessage handler
+│   │   │   ├── SlideRenderer.tsx   # Iframe srcdoc builder + postMessage handler
+│   │   │   └── slide-message.ts    # Bridge message dispatch (pure function)
 │   │   ├── file-browser/
-│   │   │   └── FileBrowser.tsx     # File list
+│   │   │   ├── FileBrowser.tsx     # File list
+│   │   │   └── format.ts          # formatSize/formatDate utilities
 │   │   ├── slide-overview/
 │   │   │   ├── SlideOverview.tsx   # dnd-kit sortable container
 │   │   │   └── SortableSlide.tsx   # Draggable thumbnail with iframe preview
 │   │   ├── toolbar/
-│   │   │   └── EditorToolbar.tsx   # Save, undo/redo, navigation, play
+│   │   │   ├── EditorToolbar.tsx   # Toolbar composition (save, undo/redo, nav, play)
+│   │   │   ├── shared.tsx          # Separator + ToolbarButton primitives
+│   │   │   ├── GitStatusBadge.tsx  # Git branch + status pill
+│   │   │   ├── SlideNavigation.tsx # Prev/next slide controls
+│   │   │   └── SelectedElementIndicator.tsx # Selected element tag display
 │   │   └── layout/
 │   │       ├── StatusBar.tsx       # File info, slide position, selection
 │   │       ├── ShortcutHints.tsx   # Keyboard shortcuts overlay (Cmd+I)
+│   │       ├── ToastContainer.tsx  # Toast notification display
 │   │       └── PresentationMode.tsx # Full-screen slideshow
 │   └── styles/editor.css          # Layout + component styles
 ├── presentations/                  # HTML slide decks

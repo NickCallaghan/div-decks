@@ -2,6 +2,7 @@ import { useRef, useEffect, useCallback } from "react";
 import type { SlideModel } from "../../types/presentation";
 import { useEditorStore } from "../../store/editor-store";
 import { EDITOR_BRIDGE_SCRIPT, EDITOR_OVERRIDE_CSS } from "../../lib/bridge";
+import { dispatchSlideMessage } from "./slide-message";
 
 interface SlideRendererProps {
   slide: SlideModel;
@@ -25,30 +26,11 @@ export function SlideRenderer({
   const handleMessage = useCallback(
     (e: MessageEvent) => {
       if (e.source !== iframeRef.current?.contentWindow) return;
-      const { data } = e;
-      switch (data.type) {
-        case "element-clicked":
-          setSelectedElement({
-            selector: data.selector,
-            tagName: data.tagName,
-            className: data.className,
-            text: data.text,
-            rect: data.rect,
-          });
-          break;
-        case "dom-updated":
-          updateSlideHtml(slide.id, data.outerHtml);
-          break;
-        case "editing-started":
-          setIsEditing(true);
-          break;
-        case "editing-finished":
-          setIsEditing(false);
-          break;
-        case "element-deselected":
-          setSelectedElement(null);
-          break;
-      }
+      dispatchSlideMessage(e.data, slide.id, {
+        updateSlideHtml,
+        setSelectedElement,
+        setIsEditing,
+      });
     },
     [slide.id, updateSlideHtml, setSelectedElement, setIsEditing],
   );

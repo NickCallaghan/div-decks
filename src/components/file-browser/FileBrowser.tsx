@@ -2,38 +2,30 @@ import { usePresentationList } from "../../hooks/usePresentationList";
 import { usePresentation } from "../../hooks/usePresentation";
 import { deletePresentation } from "../../api/presentations";
 import { useEditorStore } from "../../store/editor-store";
-
-function formatSize(bytes: number): string {
-  if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-}
-
-function formatDate(iso: string): string {
-  const d = new Date(iso);
-  return d.toLocaleDateString("en-GB", {
-    day: "numeric",
-    month: "short",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-}
+import { useToast } from "../../hooks/useToast";
+import { formatSize, formatDate } from "./format";
 
 export function FileBrowser() {
   const { files, refresh } = usePresentationList();
   const { open } = usePresentation();
   const activeFile = useEditorStore((s) => s.presentation?.filename);
   const setPresentation = useEditorStore((s) => s.setPresentation);
+  const toast = useToast();
 
   const handleDelete = async (e: React.MouseEvent, filename: string) => {
     e.stopPropagation();
     const displayName = filename.replace(".html", "");
     if (!window.confirm(`Delete "${displayName}"?`)) return;
-    await deletePresentation(filename);
-    if (filename === activeFile) {
-      setPresentation(null);
+    try {
+      await deletePresentation(filename);
+      if (filename === activeFile) {
+        setPresentation(null);
+      }
+      refresh();
+      toast.success(`Deleted "${displayName}"`);
+    } catch {
+      toast.error("Delete failed");
     }
-    refresh();
   };
 
   if (files.length === 0) {
@@ -53,7 +45,9 @@ export function FileBrowser() {
         <div
           key={file.name}
           className={`file-item ${file.name === activeFile ? "file-item--active" : ""}`}
-          onClick={() => open(file.name)}
+          onClick={() =>
+            open(file.name).catch(() => toast.error("Failed to open file"))
+          }
         >
           <svg
             width="20"
