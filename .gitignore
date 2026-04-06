@@ -25,6 +25,13 @@ dist-ssr
 # Presentation backups
 presentations/*.bak-*.html
 
+
+# Worktrees
+.worktrees/
+
+# Misc
+tmp/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
