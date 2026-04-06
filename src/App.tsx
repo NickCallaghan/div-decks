@@ -7,9 +7,8 @@ import { StatusBar } from "./components/layout/StatusBar";
 import { ShortcutHints } from "./components/layout/ShortcutHints";
 import { PresentationMode } from "./components/layout/PresentationMode";
 import { ToastContainer } from "./components/layout/ToastContainer";
-import { useToastStore } from "./store/toast-store";
 import { useEditorStore } from "./store/editor-store";
-import { usePresentation } from "./hooks/usePresentation";
+import { useUrlRouting } from "./hooks/useUrlRouting";
 
 export default function App() {
   const activeTab = useEditorStore((s) => s.activeTab);
@@ -18,20 +17,7 @@ export default function App() {
   const [isPresenting, setIsPresenting] = useState(false);
   const exitPresentation = useCallback(() => setIsPresenting(false), []);
   const presentation = useEditorStore((s) => s.presentation);
-  const { open } = usePresentation();
-
-  // Re-open last file after page reload (e.g. Vite-triggered)
-  useEffect(() => {
-    const savedFile = sessionStorage.getItem("activeFile");
-    if (savedFile && !useEditorStore.getState().presentation) {
-      open(savedFile).catch(() => {
-        sessionStorage.removeItem("activeFile");
-        useToastStore
-          .getState()
-          .addToast("error", "Failed to reopen last file");
-      });
-    }
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  useUrlRouting();
 
   const toggleShortcuts = useCallback(() => setShowShortcuts((v) => !v), []);
 

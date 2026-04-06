@@ -2,7 +2,7 @@
 
 **Created:** 2026-04-06
 **Target version:** v0.5.0
-**Starting from:** v0.3.4
+**Starting from:** v0.3.4 (now at v0.4.0 after week 1)
 
 ## Current State Assessment
 
@@ -18,63 +18,81 @@ The project is well-structured — clean code, good specs, strict TypeScript, so
 
 ---
 
-## Week 1: Foundation & Quality
+## Week 1: Foundation & Quality (COMPLETED — v0.4.0)
 
-### 1. Toast/notification system (1 day)
+### 1. Toast/notification system — DONE
 
-Replace silent `console.error` catches with user-visible feedback.
+- Added `toast-store.ts`, `ToastContainer.tsx`, `useToast.ts`
+- Replaced all silent `console.error` handlers with user-visible toasts
+- Closed all frontend error handling gaps (open, reload, delete, save, file list)
 
-**Scope:**
+### 2. Refactor EditorToolbar — DONE
 
-- Add a lightweight toast/notification component (no external dependency needed)
-- Surface: save success, save failure, delete confirmation, git status errors
-- Auto-dismiss after ~3s, stack multiple notifications
+- Split from 537 LOC to 278 LOC
+- Extracted: `shared.tsx`, `useKeyboardShortcuts.ts`, `GitStatusBadge.tsx`, `SlideNavigation.tsx`, `SelectedElementIndicator.tsx`
 
-**Files affected:** New toast component, `usePresentation.ts`, `FileBrowser.tsx`, `useGitStatus.ts`
+### 3. E2E test coverage — DONE
 
-### 2. Refactor EditorToolbar (1 day)
+- Added 12 new E2E tests (7 → 19 total)
+- Covers: element editing, save workflow, slide navigation, undo/redo
 
-Split the 537 LOC monolith into focused pieces.
+### 4. Component unit tests — DONE
 
-**Target structure:**
-
-- `useKeyboardShortcuts` hook — all Cmd+key bindings extracted
-- `GitStatusBadge` component — branch name + file status indicator
-- `NavigationControls` component — slide prev/next, slide counter
-- `FormattingToolbar` component — undo/redo, save button, future formatting actions
-
-**Constraint:** No behavior changes — pure refactor with existing tests still passing.
-
-### 3. E2E test coverage for core workflows (2 days)
-
-Implement the Playwright verification plan already outlined in specs. Target scenarios:
-
-- [ ] Select element → edit text → save → verify file changed on disk
-- [ ] Drag handle → reorder elements → verify DOM update
-- [ ] Context menu → delete element → verify removal
-- [ ] Context menu → duplicate element → verify new element
-- [ ] Slide reorder via sidebar drag-and-drop
-- [ ] Undo/redo round-trip (edit → undo → verify restored)
-- [ ] Presentation mode: enter, navigate forward/back, exit
-- [ ] Save dirty indicator: edit → dirty flag → save → clean flag
-- [ ] Keyboard shortcuts: Cmd+S (save), Cmd+Z (undo), Cmd+Shift+Z (redo)
-
-### 4. Component unit tests (1 day)
-
-Add tests for the untested interaction-heavy components:
-
-- **FileBrowser** — delete confirmation flow, file selection callback
-- **SlideOverview** — drag callbacks, active slide highlighting
-- **SlideRenderer** — postMessage handling, iframe setup
-- **PresentationMode** — keyboard navigation, exit behavior
+- Added 11 new unit tests for `dispatchSlideMessage`, `formatSize`, `formatDate`
+- Extracted testable pure functions: `slide-message.ts`, `format.ts`
 
 ---
 
-## Week 2: Features & Polish
+## Week 2: Features
 
-### 5. Rich text editing toolbar (2 days)
+### 5. Shareable deck URLs (1 day)
 
-The most impactful missing feature. Currently click-to-edit gives a raw contentEditable with no formatting controls.
+Enable opening a specific deck by URL so anyone on the same branch/repo can click a link to view it.
+
+**Scope:**
+
+- Add client-side routing: `http://localhost:5173/deck/filename` opens that deck directly
+- URL updates as user navigates (select file, change slide)
+- Optional slide anchor: `/deck/filename#slide-3`
+- Add a **Share button** to the toolbar that copies the current URL to clipboard (with toast confirmation)
+- Deep links work on page refresh (server returns the SPA for all `/deck/*` routes)
+
+**Files affected:** `App.tsx` (routing), `EditorToolbar.tsx` (share button), Vite config (SPA fallback), Express server (catch-all for `/deck/*`).
+
+**Future enhancement:** Cloud storage integration so links work without needing the repo.
+
+### 6. Export dropdown menu (1 day)
+
+Replace the single PDF export button with a dropdown button menu offering multiple export options.
+
+**Scope:**
+
+- **Dropdown button component** — click to expand sub-options, click outside to dismiss
+- **Export current slide as PNG** — render the active slide iframe to canvas, download as PNG
+- **Export full deck as PDF** — existing Cmd+P flow, triggered from the menu
+- **Export as self-contained HTML** — inline any external asset references, download as single file
+
+**Files affected:** New `ExportMenu.tsx` component, `EditorToolbar.tsx` (replace export button), new `export-png.ts` utility.
+
+### 7. Editable Gantt charts (2-3 days)
+
+Add a visual Gantt chart editor for timeline/project slides. This is a common slide type in our decks.
+
+**Scope:**
+
+- **Generic Gantt component** — rows with labels, start/end dates, horizontal bars on a timeline
+- **Inline editing** — click row label to edit text, drag bar edges to change start/end dates, drag bar body to move
+- **Add/remove rows** — buttons to insert new rows or delete existing ones
+- **Brand colors** — bars pick up CSS custom properties from the deck's brand palette
+- **Bridge integration** — Gantt chart detected as a special element type, edited via dedicated UI rather than raw contentEditable
+
+**Skill update required:** The `/new-deck` skill needs a new slide type (or enhanced dashboard type) that generates Gantt chart markup in the expected structure.
+
+**New files:** `src/components/editor/GanttEditor.tsx`, bridge detection for Gantt elements, skill template update.
+
+### 8. Rich text editing toolbar (2 days)
+
+Currently click-to-edit gives raw contentEditable with no formatting controls.
 
 **Scope:**
 
@@ -87,7 +105,7 @@ The most impactful missing feature. Currently click-to-edit gives a raw contentE
 
 **New components:** `FloatingToolbar.tsx` positioned via selection coordinates relayed from bridge.
 
-### 6. Slide management operations (1 day)
+### 9. Slide management operations (1 day)
 
 Table-stakes operations missing from the slide overview panel.
 
@@ -102,69 +120,27 @@ Table-stakes operations missing from the slide overview panel.
 
 **Serializer changes:** Ensure new slides get proper UUIDs and are serialized correctly.
 
-### 7. Keyboard navigation & accessibility (1 day)
+---
 
-**Scope:**
+## Priority Order (Week 2)
 
-- Arrow keys navigate slides in the overview panel
-- Tab/Shift+Tab cycles through elements on the active slide
-- Aria labels on all interactive elements (toolbar buttons, slide thumbnails, file list items)
-- Focus management when switching slides (focus moves to canvas)
-- Screen reader announcements for state changes (slide selected, element edited)
+| Priority | Item                  | Est.     | Why                                                                 |
+| -------- | --------------------- | -------- | ------------------------------------------------------------------- |
+| 1        | Shareable deck URLs   | 1 day    | Enables collaboration — share a link, teammate opens the right deck |
+| 2        | Export dropdown menu  | 1 day    | Unlocks PNG export, cleaner toolbar, quick win                      |
+| 3        | Editable Gantt charts | 2-3 days | High-value for our use case — we create lots of Gantt charts        |
+| 4        | Rich text toolbar     | 2 days   | Transforms "viewer with light editing" into "actual editor"         |
+| 5        | Slide management      | 1 day    | Add/delete/duplicate slides is table-stakes                         |
 
-**Files affected:** `SlideOverview.tsx`, `SortableSlide.tsx`, `EditorToolbar.tsx` (sub-components), `bridge.ts` (Tab key handling).
-
-### 8. Image/asset handling (1 day)
-
-**Scope:**
-
-- Click an image element in the slide → show replace button
-- File picker → upload to server → update `src` attribute
-- Drag-drop image onto slide canvas
-- New server endpoint: `POST /api/assets/` (stores in `presentations/assets/`)
-- New server endpoint: `GET /api/assets/:filename`
-
-**Bridge changes:** Add image click detection, postMessage for image replacement.
-
-### 9. Theme/style editing panel (1-2 days)
-
-Most generated decks use CSS custom properties for colors, fonts, and spacing. Expose them as editable controls.
-
-**Scope:**
-
-- New sidebar panel (tab alongside Files and Slides)
-- Parse `<style>` block for CSS custom property declarations (`--color-*`, `--font-*`, etc.)
-- Render color pickers, font selectors, spacing sliders
-- Live preview: update iframe's CSS variables in real-time
-- On save: write modified custom properties back into the `<style>` block
-
-**Parser changes:** Extract CSS custom properties from style blocks into the presentation model.
-
-### 10. Export improvements (0.5 day)
-
-**Scope:**
-
-- Export as self-contained HTML (inline any external asset references)
-- Export individual slides as PNG (using canvas/html2canvas in the iframe)
-- Improve existing PDF export with page size options
+Items 1-3 are the top priority. Items 4-5 fit if time allows.
 
 ---
 
-## Priority Order (if time gets tight)
+## Future Features (deferred)
 
-Cut from the bottom. The top items deliver the most value:
+These are good ideas but not in the current sprint:
 
-| Priority | Item                | Why                                                         |
-| -------- | ------------------- | ----------------------------------------------------------- |
-| 1        | Toast system        | Prevents silent failures, quick win                         |
-| 2        | Toolbar refactor    | Unlocks future feature work without growing the monolith    |
-| 3        | E2E tests           | Catches regressions in the bridge (riskiest code)           |
-| 4        | Component tests     | Cheap insurance                                             |
-| 5        | Rich text toolbar   | Transforms "viewer with light editing" into "actual editor" |
-| 6        | Slide management    | Add/delete/duplicate slides is table-stakes                 |
-| 7        | Keyboard nav & a11y | Important but deferrable                                    |
-| 8        | Image handling      | Important but deferrable                                    |
-| 9        | Theme panel         | Nice-to-have                                                |
-| 10       | Export improvements | Nice-to-have                                                |
-
-Items 1-6 are the v0.5.0 must-haves. Items 7-10 can slip to v0.6.0.
+- **Keyboard navigation & accessibility** — arrow keys in overview, Tab through elements, aria labels, focus management
+- **Image/asset handling** — click image to replace, drag-drop upload, server asset endpoints
+- **Theme/style editing panel** — sidebar tab to edit CSS custom properties (colors, fonts) with live preview
+- **Cloud storage for shared URLs** — so deck links work without needing the local repo
