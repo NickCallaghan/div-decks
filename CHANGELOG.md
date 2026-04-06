@@ -4,6 +4,17 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.4.1] - 2026-04-06
+
+### Added
+
+- Pre-commit hook that blocks version bumps without CHANGELOG.md updates
+- CLAUDE.md development rule for changelog maintenance
+
+### Changed
+
+- Backfilled CHANGELOG.md with entries for v0.3.1 through v0.4.0
+
 ## [0.4.0] - 2026-04-06
 
 ### Added
