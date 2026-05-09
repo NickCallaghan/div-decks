@@ -1,49 +1,65 @@
-# Branding Integration
+# Branding integration
 
-Decks have two CSS layers:
+A deck has two CSS layers:
 
-1. **Core CSS** (from css-core.md) — structural, functional, NEVER modified by branding
-2. **Theme CSS** — colors, fonts, backgrounds, decorative elements — this is what branding customizes
+1. **Core CSS** (`assets/core.css`) — structural, functional, never modified by branding.
+2. **Theme CSS** (`themes/<name>.css`) — colours, fonts, decoration. This is what branding customises.
 
-## What brand skills CAN customize
+Brand skills integrate by **shipping a theme file**, not by editing or layering on top of core CSS.
 
-- CSS custom properties: `--bg`, `--surface`, `--text`, `--text-dim`, `--border`, `--accent`, `--font-body`, `--font-heading`, `--font-mono`, plus any custom brand variables
-- Card/component styles (`.ve-card` variants, custom components)
-- Background treatments (gradients, patterns, images)
-- Font loading (`@import` or `<link>` for Google Fonts)
-- Color palette and theming
-- Decorative elements (accent lines, SVGs, glow effects)
-- Dark/light mode overrides via `@media (prefers-color-scheme)`
+## How a brand skill plugs in
 
-## What brand skills must NOT modify
+A brand skill (e.g. `hyble-brand`) writes a theme file to the same `themes/` directory and the user invokes the builder with `--theme <brand-name>`. The brand theme is structurally identical to the four built-in themes: a single `.css` file containing optional `@import` for fonts, plus a `:root { ... }` block defining the variable contract.
 
-- `.deck` container rules (scroll-snap, height, overflow)
-- `.slide` base rules (height, snap-align, flex, opacity/transform transition)
-- `.reveal` animation timing and delays
-- Navigation chrome positioning (`.deck-progress`, `.deck-dots`, `.deck-counter`, `.deck-hints`)
-- SlideEngine JavaScript (never modify)
-- Slide type structural layouts (`.slide--content .slide__inner` grid, `.slide--split .slide__panels` grid, etc.)
+Required variables (all must be set):
 
-## Pattern
-
-Brand CSS goes in a separate `<style>` block AFTER the core CSS. It overrides CSS custom properties and adds brand-specific component styles.
-
-```html
-<style>
-  /* Core CSS from css-core.md goes here */
-</style>
-
-<style>
-  /* Brand CSS — overrides theme variables, adds brand components */
-  :root {
-    --bg: #0a1628;
-    --surface: #132040;
-    --text: #ffffff;
-    --accent: #00ffd2;
-    --font-heading: "Barlow Semi Condensed", sans-serif;
-    --font-body: "Barlow", sans-serif;
-    --font-mono: "JetBrains Mono", monospace;
-  }
-  /* Brand-specific component styles */
-</style>
 ```
+--bg --surface --text --text-dim --border
+--accent --accent-dim
+--green --red
+--font-body --font-heading --font-mono
+```
+
+Optional additions inside the same file:
+
+- Component-level overrides scoped to slide types (e.g. `.slide--quote { background: ... }`).
+- Decorative `body` background (gradients, patterns, textures).
+- Font loading via `@import` at the top of the file.
+
+## Hard boundaries
+
+A brand theme **must not** include rules for:
+
+- `.deck` container (scroll-snap, height, overflow).
+- `.slide` base layout (height, snap-align, flex, the entrance transition).
+- `.reveal` animation timing or delay sequencing.
+- Navigation chrome positioning (`.deck-progress`, `.deck-dots`, `.deck-counter`, `.deck-hints`).
+- Slide-type structural grids (`.slide--content .slide__inner`, `.slide--split .slide__panels`, `.slide--dashboard .slide__kpis`).
+- Anything in `assets/slide-engine.js` — never touch.
+
+If a brand skill needs to violate one of these, that's a bug in the core CSS, not the brand. File it.
+
+## Example
+
+A brand theme file `themes/hyble.css`:
+
+```css
+@import url("https://fonts.googleapis.com/css2?family=Barlow:wght@400;600;700&display=swap");
+
+:root {
+  --bg: #0a1628;
+  --surface: #132040;
+  --text: #ffffff;
+  --text-dim: #9aa3b8;
+  --border: #1f2d4d;
+  --accent: #00ffd2;
+  --accent-dim: rgba(0, 255, 210, 0.08);
+  --green: #34d399;
+  --red: #f87171;
+  --font-body: "Barlow", system-ui, sans-serif;
+  --font-heading: "Barlow", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+}
+```
+
+Invoked as `--theme hyble`. Same builder, no special path.

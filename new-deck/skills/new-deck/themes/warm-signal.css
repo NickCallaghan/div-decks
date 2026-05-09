@@ -1,0 +1,20 @@
+@import url("https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;700;800&family=JetBrains+Mono:wght@400;600&display=swap");
+
+:root {
+  --bg: #faf7f5;
+  --surface: #f3ede7;
+  --text: #1a1a1a;
+  --text-dim: #6b6157;
+  --border: #e5dcd2;
+  --accent: #c2410c;
+  --accent-dim: rgba(194, 65, 12, 0.08);
+  --green: #4f7d4d;
+  --red: #b91c1c;
+  --font-body: "Plus Jakarta Sans", system-ui, sans-serif;
+  --font-heading: "Plus Jakarta Sans", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+}
+
+.slide--quote {
+  background: var(--accent-dim);
+}

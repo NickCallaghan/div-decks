@@ -10,7 +10,7 @@
       "name": "new-deck",
       "source": "./new-deck",
       "description": "Generate self-contained HTML slide decks compatible with div.deck",
-      "version": "0.1.0",
+      "version": "0.2.0",
       "category": "development",
       "tags": ["slides", "presentation", "html", "div-deck"]
     }
