@@ -1,16 +1,18 @@
-# Core CSS
+/* Core deck CSS. Theme files set CSS custom properties; this file consumes them. */
 
-This CSS is REQUIRED in every deck. It handles the scroll-snap container, slide transitions, reveal animations, and navigation chrome. Copy it into your `<style>` block. Theme-specific CSS (colors, fonts, card styles) goes AFTER this.
-
-## Deck Container & Slide Base
-
-```css
 *,
 *::before,
 *::after {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
+}
+
+body {
+  font-family: var(--font-body);
+  background: var(--bg);
+  color: var(--text);
+  -webkit-font-smoothing: antialiased;
 }
 
 .deck {
@@ -42,11 +44,7 @@ This CSS is REQUIRED in every deck. It handles the scroll-snap container, slide 
   opacity: 1;
   transform: none;
 }
-```
 
-## Reveal Animation
-
-```css
 .slide .reveal {
   opacity: 0;
   transform: translateY(20px);
@@ -92,11 +90,7 @@ This CSS is REQUIRED in every deck. It handles the scroll-snap container, slide 
     transition: none !important;
   }
 }
-```
 
-## Typography Scale
-
-```css
 .slide__display {
   font-size: clamp(48px, 10vw, 120px);
   font-weight: 800;
@@ -126,11 +120,7 @@ This CSS is REQUIRED in every deck. It handles the scroll-snap container, slide 
   text-transform: uppercase;
   letter-spacing: 2px;
 }
-```
 
-## Navigation Chrome
-
-```css
 .deck-progress {
   position: fixed;
   top: 0;
@@ -207,12 +197,7 @@ This CSS is REQUIRED in every deck. It handles the scroll-snap container, slide 
   opacity: 0;
   pointer-events: none;
 }
-```
 
-## Slide Type Layouts
-
-```css
-/* Content — asymmetric grid */
 .slide--content .slide__inner {
   display: grid;
   grid-template-columns: 3fr 2fr;
@@ -221,7 +206,6 @@ This CSS is REQUIRED in every deck. It handles the scroll-snap container, slide 
   width: 100%;
 }
 
-/* Split — two panels */
 .slide--split .slide__panels {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -230,7 +214,6 @@ This CSS is REQUIRED in every deck. It handles the scroll-snap container, slide 
   height: 100%;
 }
 
-/* Dashboard — auto-fit KPI grid */
 .slide--dashboard .slide__kpis {
   display: grid;
   grid-template-columns: repeat(
@@ -240,7 +223,6 @@ This CSS is REQUIRED in every deck. It handles the scroll-snap container, slide 
   gap: clamp(12px, 2vw, 24px);
 }
 
-/* Divider — centered with background number */
 .slide--divider {
   justify-content: center;
   text-align: center;
@@ -255,7 +237,6 @@ This CSS is REQUIRED in every deck. It handles the scroll-snap container, slide 
   pointer-events: none;
 }
 
-/* Bleed — full background */
 .slide--bleed {
   padding: 0;
 }
@@ -280,17 +261,40 @@ This CSS is REQUIRED in every deck. It handles the scroll-snap container, slide 
   padding: clamp(40px, 6vh, 80px) clamp(40px, 8vw, 120px);
 }
 
-/* Quote */
 .slide--quote {
+  align-items: center;
+  justify-content: center;
   text-align: center;
 }
+.slide--quote .slide__content {
+  max-width: 720px;
+  position: relative;
+}
 .slide__quote-mark {
-  font-size: clamp(60px, 10vw, 120px);
-  line-height: 1;
+  font-family: var(--font-heading);
+  font-size: clamp(80px, 15vw, 160px);
+  font-weight: 800;
+  line-height: 0.8;
+  color: var(--accent);
   opacity: 0.15;
+  display: block;
+  margin-bottom: -0.2em;
+  user-select: none;
+}
+.slide--quote .slide__body {
+  font-size: clamp(20px, 3.5vw, 36px);
+  font-weight: 500;
+  line-height: 1.4;
+  text-wrap: balance;
+}
+.slide__attribution {
+  margin-top: 1.5em;
+  font-family: var(--font-mono);
+  font-size: clamp(12px, 1.4vw, 16px);
+  font-weight: 600;
+  color: var(--accent);
 }
 
-/* Code */
 .slide__code-block {
   font-family: var(--font-mono);
   font-size: clamp(14px, 1.5vw, 18px);
@@ -310,7 +314,6 @@ This CSS is REQUIRED in every deck. It handles the scroll-snap container, slide 
   margin-bottom: 8px;
 }
 
-/* Bullets */
 .slide__bullets {
   list-style: none;
   padding: 0;
@@ -332,7 +335,6 @@ This CSS is REQUIRED in every deck. It handles the scroll-snap container, slide 
   background: var(--accent);
 }
 
-/* Table */
 .table-wrap {
   border: 1px solid var(--border);
   border-radius: 8px;
@@ -360,7 +362,6 @@ This CSS is REQUIRED in every deck. It handles the scroll-snap container, slide 
   font-size: clamp(14px, 1.8vw, 20px);
 }
 
-/* KPIs */
 .slide__kpi {
   background: var(--surface);
   border: 1px solid var(--border);
@@ -391,6 +392,12 @@ This CSS is REQUIRED in every deck. It handles the scroll-snap container, slide 
 .slide__kpi-trend--down {
   color: var(--red, #dc2626);
 }
-```
-
-These CSS custom properties must be defined in your theme: `--bg`, `--surface`, `--text`, `--text-dim`, `--border`, `--accent`, `--font-body`, `--font-heading`, `--font-mono`. See the template for examples.
+.slide__kpi-trend--down-good {
+  color: var(--green, #059669);
+}
+.slide__kpi-trend--down-bad {
+  color: var(--red, #dc2626);
+}
+.slide__kpi-trend--neutral {
+  color: var(--text-dim);
+}

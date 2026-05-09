@@ -1,0 +1,27 @@
+@import url("https://fonts.googleapis.com/css2?family=Crimson+Pro:wght@400;500;700;800&family=JetBrains+Mono:wght@400;600&display=swap");
+
+:root {
+  --bg: #0d1117;
+  --surface: #161b22;
+  --text: #e6edf3;
+  --text-dim: #8b949e;
+  --border: #30363d;
+  --accent: #f5b942;
+  --accent-dim: rgba(245, 185, 66, 0.1);
+  --green: #3fb950;
+  --red: #f85149;
+  --font-body: "Crimson Pro", Georgia, serif;
+  --font-heading: "Crimson Pro", Georgia, serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+}
+
+.slide__display,
+.slide__heading {
+  font-style: italic;
+  font-weight: 700;
+  letter-spacing: -2px;
+}
+
+.slide--quote {
+  background: var(--accent-dim);
+}

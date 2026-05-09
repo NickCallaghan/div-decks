@@ -1,8 +1,3 @@
-# Slide Engine
-
-Every deck MUST include this JavaScript at the end of the `<body>`. It handles navigation, scroll-spy, keyboard/touch input, and creates navigation chrome (progress bar, dots, counter, hints).
-
-```javascript
 function SlideEngine() {
   this.deck = document.querySelector(".deck");
   this.slides = [].slice.call(document.querySelectorAll(".slide"));
@@ -42,7 +37,7 @@ SlideEngine.prototype.buildChrome = function () {
 
   var hints = document.createElement("div");
   hints.className = "deck-hints";
-  hints.textContent = "\u2190 \u2192 or scroll to navigate";
+  hints.textContent = "← → or scroll to navigate";
   document.body.appendChild(hints);
   this.hints = hints;
   this.hintTimer = setTimeout(function () {
@@ -134,11 +129,3 @@ SlideEngine.prototype.fadeHints = function () {
 };
 
 new SlideEngine();
-```
-
-- Uses prototype-based syntax for broadest browser compatibility
-- Uses IntersectionObserver with threshold 0.5 to detect which slide is in view
-- Keyboard: arrows, space, page up/down, home, end
-- Touch: vertical swipe > 50px
-- Hints auto-fade after 4 seconds
-- DO NOT modify this engine — it must match what div.deck expects

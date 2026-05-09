@@ -1,0 +1,20 @@
+@import url("https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700;800&family=JetBrains+Mono:wght@400;600&display=swap");
+
+:root {
+  --bg: #ffffff;
+  --surface: #f8f9fa;
+  --text: #1a1a2e;
+  --text-dim: #6b7280;
+  --border: #e5e7eb;
+  --accent: #2563eb;
+  --accent-dim: rgba(37, 99, 235, 0.08);
+  --green: #059669;
+  --red: #dc2626;
+  --font-body: "DM Sans", system-ui, sans-serif;
+  --font-heading: "DM Sans", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+}
+
+.slide--quote {
+  background: var(--accent-dim);
+}

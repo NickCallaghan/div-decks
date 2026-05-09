@@ -50,7 +50,7 @@ describe("new-deck plugin structure", () => {
       ),
     );
     expect(plugin.name).toBe("new-deck");
-    expect(plugin.version).toBe("0.1.0");
+    expect(plugin.version).toBe("0.2.0");
     expect(plugin.license).toBe("MIT");
   });
 
@@ -73,32 +73,62 @@ describe("new-deck plugin structure", () => {
 
   it("has all required reference files", () => {
     const refsDir = path.join(pluginDir, "skills", "new-deck", "references");
-    for (const ref of [
-      "slide-engine.md",
-      "slide-types.md",
-      "css-core.md",
-      "branding.md",
-    ]) {
+    for (const ref of ["slide-types.md", "branding.md"]) {
       expect(fs.existsSync(path.join(refsDir, ref))).toBe(true);
     }
   });
 
-  it("has template deck with SlideEngine", () => {
-    const content = fs.readFileSync(
-      path.join(
-        pluginDir,
-        "skills",
-        "new-deck",
-        "templates",
-        "slide-deck.html",
-      ),
+  it("ships core.css and slide-engine.js as the single source of truth", () => {
+    const assetsDir = path.join(pluginDir, "skills", "new-deck", "assets");
+    const core = fs.readFileSync(path.join(assetsDir, "core.css"), "utf-8");
+    expect(core).toContain(".deck {");
+    expect(core).toContain(".slide {");
+    const engine = fs.readFileSync(
+      path.join(assetsDir, "slide-engine.js"),
       "utf-8",
     );
-    expect(content).toContain("SlideEngine");
-    expect(content).toContain('class="deck"');
-    expect(
-      (content.match(/class="slide /g) || []).length,
-    ).toBeGreaterThanOrEqual(5);
+    expect(engine).toContain("function SlideEngine()");
+    expect(engine).toContain("new SlideEngine()");
+  });
+
+  it("has base.html template with all injection markers", () => {
+    const content = fs.readFileSync(
+      path.join(pluginDir, "skills", "new-deck", "templates", "base.html"),
+      "utf-8",
+    );
+    for (const marker of [
+      "<!--TITLE-->",
+      "<!--THEME-->",
+      "<!--CORE-CSS-->",
+      "<!--SLIDES-->",
+      "<!--SLIDE-ENGINE-->",
+    ]) {
+      expect(content).toContain(marker);
+    }
+  });
+
+  it("ships the four built-in themes", () => {
+    const themesDir = path.join(pluginDir, "skills", "new-deck", "themes");
+    for (const theme of ["midnight", "warm-signal", "terminal", "swiss"]) {
+      const css = fs.readFileSync(
+        path.join(themesDir, `${theme}.css`),
+        "utf-8",
+      );
+      expect(css).toContain(":root");
+      expect(css).toContain("--accent");
+      expect(css).toContain("--font-body");
+    }
+  });
+
+  it("ships the build-deck.mjs builder", () => {
+    const builder = fs.readFileSync(
+      path.join(pluginDir, "skills", "new-deck", "bin", "build-deck.mjs"),
+      "utf-8",
+    );
+    expect(builder).toContain("#!/usr/bin/env node");
+    expect(builder).toContain("--theme");
+    expect(builder).toContain("--slides");
+    expect(builder).toContain("--out");
   });
 
   it("has MIT LICENSE", () => {
